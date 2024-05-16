@@ -267,7 +267,9 @@ async def partial_update_user(
     """
 
     result: UserTable | None = await user_view.update(
-        db_session=db_session, record_id=user_id, record=record  # type: ignore
+        db_session=db_session,
+        record_id=user_id,
+        record=record,  # type: ignore
     )
 
     if not result:
