@@ -1,0 +1,15 @@
+services:
+  fastapi-boilerplate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    develop:
+      watch:
+        - action: sync
+          path: .
+          target: /usr/src/app
+    command: [ "./scripts/run.sh" ]

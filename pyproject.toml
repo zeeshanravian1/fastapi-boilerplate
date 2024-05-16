@@ -1,0 +1,43 @@
+[tool.poetry]
+name = "fastapi-boilerplate"
+version = "0.1.0"
+description = ""
+authors = ["Zeeshan Asim <zeeshanravian1@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+fastapi = {extras = ["all"], version = "^0.111.0"}
+mysqlclient = "^2.2.4"
+alembic = "^1.13.1"
+python-jose = "^3.3.0"
+types-python-jose = "^3.3.4.20240106"
+passlib = "^1.7.4"
+types-passlib = "^1.7.7.20240327"
+
+[tool.poetry.group.dev.dependencies]
+pre-commit = "^3.7.1"
+pytest-asyncio = "^0.23.6"
+ipykernel = "^6.29.4"
+jupyter = "^1.0.0"
+radon = "^6.0.1"
+python-lsp-server = {extras = ["all"], version = "^1.11.0"}
+black = "^24.4.2"
+pyupgrade = "^3.15.2"
+ruff = "^0.4.4"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
+
+[tool.skjold]
+sources = ["pyup"]                      # Sources to check against.
+report_only = false                     # Report only, always exit with zero.
+report_format = 'cli'                   # Output findings as `json`. Default is 'cli'.
+cache_dir = '.skjold_cache'             # Cache location (default: `~/.skjold/cache`).
+cache_expires = 86400                   # Cache max. age.
+ignore_file = '.skjoldignore'           # Ignorefile location (default `.skjoldignore`).
+verbose = true
