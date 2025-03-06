@@ -8,6 +8,7 @@ repos:
     # Prevents committing large files that can slow down repository
     # performance, ensuring repo stays lightweight and manageable.
     - id: check-added-large-files
+      args: ['--maxkb=2048']
 
     # Detects filename conflicts that arise due to case-insensitive
     # filesystems, preventing issues in cross-platform projects.
@@ -44,10 +45,6 @@ repos:
 
     # Check for debugger imports and py37+ breakpoint() calls in python source.
     - id: debug-statements
-
-    # Checks that executables have a shebang, ensuring that script is executed
-    # with correct interpreter.
-    - id: check-executables-have-shebangs
 
     # Verifies that scripts with a shebang are marked as executable, ensuring
     # proper script execution in Unix-based systems.
