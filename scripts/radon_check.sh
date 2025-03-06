@@ -14,12 +14,12 @@ radon_output=$(radon cc -a -e "$EXCLUDE" "$DIRECTORY")
 
 # Check if radon found any Python files to analyze
 if [[ -z "$radon_output" ]]; then
-    average_complexity="$COMPLEXITY_SCORE"  # Default to the threshold if no files
+    average_complexity="$COMPLEXITY_SCORE"  # Default to threshold if no files
 else
     # Extract average complexity from radon output
     average_complexity=$(echo "$radon_output" | grep -oP '(?<=Average complexity: )\S+' || echo "$COMPLEXITY_SCORE")
 
-    # If average_complexity is empty (grep didn't find a match), set it to the threshold
+    # If average_complexity is empty (grep didn't find a match), set it to threshold
     if [[ -z "$average_complexity" ]]; then
         average_complexity="$COMPLEXITY_SCORE"
     fi

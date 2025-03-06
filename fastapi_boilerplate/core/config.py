@@ -29,7 +29,7 @@ class Settings(BaseSettings):
     """Core Settings Class.
 
     Description:
-    - This class is used to define core settings for the application.
+    - This class is used to define core settings for application.
 
     """
 
@@ -56,7 +56,7 @@ class Settings(BaseSettings):
         """SQLAlchemy Database URI.
 
         Description:
-        - This property is used to return the SQLAlchemy database URI.
+        - This property is used to return SQLAlchemy database URI.
 
         """
         return MultiHostUrl.build(  # type: ignore[return-value]
@@ -161,7 +161,7 @@ class Settings(BaseSettings):
         """Superuser Username.
 
         Description:
-        - This property is used to return the superuser username.
+        - This property is used to return superuser username.
 
         """
         return self.SUPERUSER_EMAIL.split(sep="@")[0]

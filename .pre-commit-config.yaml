@@ -115,8 +115,8 @@ repos:
       exclude: .git,__pycache__
       language_version: python3.12
 
-  # A tool to automatically format Python code to conform to the PEP 8 style
-  # guide, improving code readability and consistency.
+  # A tool to automatically format Python code to conform to PEP 8 style guide,
+  # improving code readability and consistency.
   - repo: https://github.com/astral-sh/ruff-pre-commit
     # Ruff version.
     rev: v0.9.9
