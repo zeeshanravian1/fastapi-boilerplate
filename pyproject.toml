@@ -11,7 +11,8 @@ readme = "README.md"
 requires-python = ">=3.13,<4.0"
 dependencies = [
     "fastapi[all] (>=0.115.11,<0.116.0)",
-    "sqlmodel (>=0.0.23,<0.0.24)"
+    "sqlmodel (>=0.0.24,<0.0.25)",
+    "psycopg[binary,pool] (>=3.2.5,<4.0.0)"
 ]
 
 [tool.poetry.group.dev.dependencies]
@@ -26,8 +27,7 @@ mypy = "^1.15.0"
 python-lsp-server = {extras = ["all"], version = "^1.12.2"}
 black = "^25.1.0"
 pyupgrade = "^3.19.1"
-ruff = "^0.9.9"
-skjold = "^0.6.2"
+ruff = "^0.9.10"
 bandit = "^1.8.3"
 coverage = "^7.6.12"
 logfire = "^3.7.1"
@@ -80,12 +80,3 @@ convention = "google"
 [tool.ruff.lint.isort]
 combine-as-imports = true
 split-on-trailing-comma = false
-
-[tool.skjold]
-sources = ["github", "pyup", "gemnasium"]  # Sources to check against.
-report_only = false                        # Exit with non-zero exit code on findings.
-report_format = 'cli'                      # Output findings as `json`. Default is 'cli'.
-cache_dir = '.skjold_cache'                # Cache location (default: `~/.skjold/cache`).
-cache_expires = 86400                      # Cache max. age.
-ignore_file = '.skjoldignore'              # Ignorefile location (default `.skjoldignore`).
-verbose = true                             # Be verbose.

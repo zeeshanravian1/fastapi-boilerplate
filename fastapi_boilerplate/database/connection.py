@@ -6,11 +6,12 @@ for all tables.
 
 """
 
-from datetime import UTC, datetime
+from datetime import datetime
 from uuid import UUID, uuid4
 
 from sqlalchemy import Engine
-from sqlmodel import Field, MetaData, SQLModel, create_engine
+from sqlalchemy.sql.functions import now
+from sqlmodel import Column, DateTime, Field, MetaData, SQLModel, create_engine
 
 from fastapi_boilerplate.core.config import settings
 
@@ -35,12 +36,18 @@ class Base(SQLModel):
 
     id: UUID = Field(default_factory=uuid4, primary_key=True)
     is_deleted: bool = Field(default=False)
-    created_at: datetime = Field(default_factory=lambda: datetime.now(tz=UTC))
+    created_at: datetime = Field(
+        sa_column=Column(DateTime(timezone=True), default=now())
+    )
     updated_at: datetime | None = Field(
-        default=None, sa_column_kwargs={"onupdate": datetime.now(tz=UTC)}
+        sa_column=Column(
+            DateTime(timezone=True), nullable=True, onupdate=now()
+        )
     )
     deleted_at: datetime | None = Field(
-        default=None, sa_column_kwargs={"onupdate": datetime.now(tz=UTC)}
+        sa_column=Column(
+            DateTime(timezone=True), nullable=True, onupdate=now()
+        )
     )
 
     class ModelConfig:  # pylint: disable=too-few-public-methods
