@@ -1,5 +1,3 @@
-#!/bin/bash
-
 repos:
   # General git checks
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -119,7 +117,7 @@ repos:
   # improving code readability and consistency.
   - repo: https://github.com/astral-sh/ruff-pre-commit
     # Ruff version.
-    rev: v0.9.10
+    rev: v0.11.2
     hooks:
       # Run linter.
       - id: ruff
@@ -130,7 +128,7 @@ repos:
   # A tool to check Python code for type hints and type errors, ensuring that
   # code is correctly annotated and free of type-related issues.
   - repo: https://github.com/RobertCraigie/pyright-python
-    rev: v1.1.396
+    rev: v1.1.397
     hooks:
     - id: pyright
       language: system

@@ -22,7 +22,7 @@ my_metadata: MetaData = MetaData()
 class Base(SQLModel):
     """Base Table.
 
-    Description:
+    :Description:
     - This is base model for all tables.
 
     :Attributes:

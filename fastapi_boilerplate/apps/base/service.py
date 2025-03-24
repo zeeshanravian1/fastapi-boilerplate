@@ -1,37 +1,35 @@
-"""Base Repository Module.
+"""Base Service Module.
 
 Description:
-- This module contains base repository for all repositories in application.
+- This module contains base service for all services in application.
 
 """
 
-import math
 from collections.abc import Sequence
 from typing import Generic
 from uuid import UUID
 
-from sqlalchemy import ColumnElement
-from sqlmodel import SQLModel, col, func, select
-from sqlmodel.sql._expression_select_cls import SelectOfScalar
+from sqlmodel import SQLModel
 
 from fastapi_boilerplate.database.session import DBSession
 
 from .model import BasePaginationData, Message, Model
+from .repository import BaseRepository
 
 
-class BaseRepository(Generic[Model]):
-    """Base Repository Class.
+class BaseService(Generic[Model]):
+    """Base Service Class.
 
     :Description:
-    - This class provides a generic CRUD interface for database models.
+    - This class provides a generic CRUD interface for for services.
 
     """
 
     def __init__(self, model: type[Model]) -> None:
-        """Initialize BaseRepository.
+        """Initialize BaseService.
 
         :Description:
-        - This method initializes BaseRepository with model class.
+        - This method initializes BaseService with model class.
 
         :Args:
         - `model` (type[Model]): SQLModel model class to use. **(Required)**
@@ -40,13 +38,13 @@ class BaseRepository(Generic[Model]):
         - `None`
 
         """
-        self.model: type[Model] = model
+        self.repository = BaseRepository[Model](model=model)
 
     async def create(self, db_session: DBSession, record: SQLModel) -> Model:
-        """Create a new record in database.
+        """Create a new record.
 
         :Description:
-        - This method adds a new record to database.
+        - This method creates a new record.
 
         :Args:
         - `db_session` (DBSession): SQLModel database session. **(Required)**
@@ -57,20 +55,17 @@ class BaseRepository(Generic[Model]):
         - `record` (Model): Created record.
 
         """
-        db_instance: Model = self.model(**record.model_dump())
-        db_session.add(instance=db_instance)
-        db_session.commit()
-        db_session.refresh(instance=db_instance)
-
-        return db_instance
+        return await self.repository.create(
+            db_session=db_session, record=record
+        )
 
     async def create_multiple(
         self, db_session: DBSession, records: list[SQLModel]
     ) -> Sequence[Model]:
-        """Create multiple records in database.
+        """Create multiple records.
 
         :Description:
-        - This method adds multiple records to database.
+        - This method creates multiple records.
 
         :Args:
         - `db_session` (DBSession): SQLModel database session. **(Required)**
@@ -78,16 +73,12 @@ class BaseRepository(Generic[Model]):
         database. **(Required)**
 
         :Returns:
-        - `records` (Sequence[Model]): List of created records.
+        - `records` (list[Model]): List of created records.
 
         """
-        db_instances: list[Model] = [
-            self.model(**record.model_dump()) for record in records
-        ]
-        db_session.add_all(instances=db_instances)
-        db_session.commit()
-
-        return db_instances
+        return await self.repository.create_multiple(
+            db_session=db_session, records=records
+        )
 
     async def read_by_id(
         self, db_session: DBSession, record_id: UUID | int
@@ -95,7 +86,7 @@ class BaseRepository(Generic[Model]):
         """Retrieve a single record by its ID.
 
         :Description:
-        - This method fetches a single record from database by its ID.
+        - This method retrieves a single record by its ID.
 
         :Args:
         - `db_session` (DBSession): SQLModel database session. **(Required)**
@@ -105,7 +96,9 @@ class BaseRepository(Generic[Model]):
         - `record` (Model | None): Retrieved record, or None if not found.
 
         """
-        return db_session.get(entity=self.model, ident=record_id)
+        return await self.repository.read_by_id(
+            db_session=db_session, record_id=record_id
+        )
 
     async def read_multiple_by_ids(
         self, db_session: DBSession, record_ids: list[UUID | int]
@@ -113,7 +106,7 @@ class BaseRepository(Generic[Model]):
         """Retrieve multiple records by their IDs.
 
         :Description:
-        - This method fetches multiple records from database by their IDs.
+        - This method retrieves multiple records by their IDs.
 
         :Args:
         - `db_session` (DBSession): SQLModel database session. **(Required)**
@@ -124,10 +117,9 @@ class BaseRepository(Generic[Model]):
         - `records` (Sequence[Model]): List of retrieved records.
 
         """
-        query: SelectOfScalar[Model] = select(self.model).where(
-            col(column_expression=self.model.id).in_(other=record_ids)
+        return await self.repository.read_multiple_by_ids(
+            db_session=db_session, record_ids=record_ids
         )
-        return db_session.exec(statement=query).all()
 
     async def read_all(
         self,
@@ -142,13 +134,11 @@ class BaseRepository(Generic[Model]):
         """Retrieve all records.
 
         :Description:
-        - This method fetches all records from database and paginates them.
+        - This method fetches all records and paginates them.
         - It also provides search functionality based on a specific field.
 
         :Args:
         - `db_session` (DBSession): SQLModel database session. **(Required)**
-        - `order_by` (str): Column name to order by. **(Optional)**
-        - `desc` (bool): Whether to order in descending order. **(Optional)**
         - `page` (int): Page number to fetch. **(Optional)**
         - `limit` (int): Number of records per page. **(Optional)**
         - `search_by` (str): Field to search by. **(Optional)**
@@ -156,60 +146,21 @@ class BaseRepository(Generic[Model]):
 
         :Returns:
         - `PaginationBase`: Paginated records along with following details:
-            - `page` (int): Current page number.
+            - `current_page` (int): Current page number.
             - `limit` (int): Number of records per page.
             - `total_pages` (int): Total number of pages.
             - `total_records` (int): Total number of records.
             - `records` (Sequence[Model]): List of records for current page.
 
         """
-        # Validate order column
-        order_column: str = order_by or "created_at"
-
-        if not hasattr(self.model, order_column):
-            raise ValueError(f"Invalid order column: {order_column}")
-
-        # Validate search column and build search condition
-        search_condition: ColumnElement[bool] | None = None
-
-        if search_query and search_by:
-            if not hasattr(self.model, search_by):
-                raise ValueError(f"Invalid search column: {search_by}")
-
-            search_condition = col(
-                column_expression=getattr(self.model, search_by)
-            ).contains(other=search_query)
-
-        # Build queries
-        count_query: SelectOfScalar[int] = select(
-            func.count()  # pylint: disable=not-callable
-        ).select_from(self.model)
-        main_query: SelectOfScalar[Model] = select(self.model).order_by(
-            getattr(self.model, order_column).desc()
-            if desc
-            else getattr(self.model, order_column)
-        )
-
-        if search_condition is not None:
-            count_query = count_query.where(search_condition)
-            main_query = main_query.where(search_condition)
-
-        # Apply pagination
-        if page and limit:
-            main_query = main_query.offset(offset=(page - 1) * limit).limit(
-                limit=limit
-            )
-
-        # Execute queries
-        total_records: int = db_session.exec(statement=count_query).one()
-        records: Sequence[Model] = db_session.exec(statement=main_query).all()
-
-        return BasePaginationData(
-            page=page or 1,
-            limit=limit or total_records,
-            total_pages=math.ceil(total_records / limit) if limit else 1,
-            total_records=total_records,
-            records=records,
+        return await self.repository.read_all(
+            db_session=db_session,
+            order_by=order_by,
+            desc=desc,
+            page=page,
+            limit=limit,
+            search_by=search_by,
+            search_query=search_query,
         )
 
     async def update_by_id(
@@ -218,7 +169,7 @@ class BaseRepository(Generic[Model]):
         """Update a record by its ID.
 
         :Description:
-        - This method updates a record in database by its ID.
+        - This method updates a record by its ID.
 
         :Args:
         - `db_session` (DBSession): SQLModel database session. **(Required)**
@@ -229,18 +180,9 @@ class BaseRepository(Generic[Model]):
         - `record` (Model | None): Updated record, or None if not found.
 
         """
-        db_record: Model | None = await self.read_by_id(
-            db_session=db_session, record_id=record_id
+        return await self.repository.update_by_id(
+            db_session=db_session, record_id=record_id, record=record
         )
-
-        if not db_record:
-            return None
-
-        db_record.sqlmodel_update(obj=record.model_dump(exclude_unset=True))
-        db_session.commit()
-        db_session.refresh(instance=db_record)
-
-        return db_record
 
     async def update_multiple_by_ids(
         self,
@@ -251,7 +193,7 @@ class BaseRepository(Generic[Model]):
         """Update multiple records by their IDs.
 
         :Description:
-        - This method updates multiple records in database by their IDs.
+        - This method updates multiple records by their IDs.
 
         :Args:
         - `db_session` (DBSession): SQLModel database session. **(Required)**
@@ -264,18 +206,9 @@ class BaseRepository(Generic[Model]):
         - `Sequence[Model]`: List of updated records.
 
         """
-        db_records: Sequence[Model] = await self.read_multiple_by_ids(
-            db_session=db_session, record_ids=record_ids
+        return await self.repository.update_multiple_by_ids(
+            db_session=db_session, record_ids=record_ids, records=records
         )
-
-        for db_record, record in zip(db_records, records, strict=False):
-            db_record.sqlmodel_update(
-                obj=record.model_dump(exclude_unset=True)
-            )
-
-        db_session.commit()
-
-        return db_records
 
     async def delete_by_id(
         self, db_session: DBSession, record_id: UUID | int
@@ -283,7 +216,7 @@ class BaseRepository(Generic[Model]):
         """Delete a record by its ID.
 
         :Description:
-        - This method deletes a record from database by its ID.
+        - This method deletes a record by its ID.
 
         :Args:
         - `db_session` (DBSession): SQLModel database session. **(Required)**
@@ -294,25 +227,14 @@ class BaseRepository(Generic[Model]):
         deleted, or None if not found.
 
         """
-        record: Model | None = await self.read_by_id(
+        return await self.repository.delete_by_id(
             db_session=db_session, record_id=record_id
         )
 
-        if not record:
-            return None
-
-        db_session.delete(instance=record)
-        db_session.commit()
-
-        return Message(message="Record deleted successfully")
-
     async def delete_multiple_by_ids(
         self, db_session: DBSession, record_ids: list[UUID | int]
-    ) -> Message:
+    ) -> Message | None:
         """Delete multiple records by their IDs.
-
-        :Description:
-        - This method deletes multiple records from database by their IDs.
 
         :Args:
         - `db_session` (DBSession): SQLModel database session. **(Required)**
@@ -324,13 +246,6 @@ class BaseRepository(Generic[Model]):
         deleted.
 
         """
-        records: Sequence[Model] = await self.read_multiple_by_ids(
+        return await self.repository.delete_multiple_by_ids(
             db_session=db_session, record_ids=record_ids
         )
-
-        for record in records:
-            db_session.delete(instance=record)
-
-        db_session.commit()
-
-        return Message(message="Records deleted successfully")

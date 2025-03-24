@@ -2,6 +2,7 @@
 
 Description:
 - This module is used to configure database session.
+
 """
 
 from collections.abc import Generator
@@ -16,7 +17,7 @@ from .connection import engine
 def get_session() -> Generator[Session]:
     """Get session.
 
-    Description:
+    :Description:
     - This function is used to get session.
 
     :Returns:

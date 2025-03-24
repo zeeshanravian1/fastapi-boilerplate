@@ -11,7 +11,7 @@ from fastapi.routing import APIRoute
 def parse_cors(cors: list[str] | str) -> list[str] | str:
     """Parse Cors.
 
-    Description:
+    :Description:
     - This function is used to parse cors values.
 
     :Args:
@@ -34,7 +34,7 @@ def parse_cors(cors: list[str] | str) -> list[str] | str:
 def custom_generate_unique_id(route: APIRoute) -> str:
     """Custom Generate Unique ID.
 
-    Description:
+    :Description:
     - This function is used to return a custom unique id for routes.
 
     :Args:

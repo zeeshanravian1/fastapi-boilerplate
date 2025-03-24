@@ -28,7 +28,7 @@ from .helper import parse_cors
 class Settings(BaseSettings):
     """Core Settings Class.
 
-    Description:
+    :Description:
     - This class is used to define core settings for application.
 
     """
@@ -55,7 +55,7 @@ class Settings(BaseSettings):
     ) -> PostgresDsn:
         """SQLAlchemy Database URI.
 
-        Description:
+        :Description:
         - This property is used to return SQLAlchemy database URI.
 
         """
@@ -99,7 +99,7 @@ class Settings(BaseSettings):
     def all_cors_origins(self) -> list[str]:
         """All Cors Origins.
 
-        Description:
+        :Description:
         - This property is used to return all cors origins.
 
         """
@@ -139,7 +139,7 @@ class Settings(BaseSettings):
     def emails_enabled(self) -> bool:
         """Emails Enabled.
 
-        Description:
+        :Description:
         - This property is used to check if emails are enabled
 
         """
@@ -160,7 +160,7 @@ class Settings(BaseSettings):
     ) -> str:
         """Superuser Username.
 
-        Description:
+        :Description:
         - This property is used to return superuser username.
 
         """

@@ -40,15 +40,13 @@ app.add_middleware(
     path="/",
     status_code=status.HTTP_200_OK,
     summary="Home page",
-    description="This is root route.",
     response_description="Home page",
-    include_in_schema=False,
     tags=["Root"],
 )
 async def root() -> dict[str, str]:
     """Root Route.
 
-    Description:
+    :Description:
     - This function is used to create root route.
 
     :Args:
@@ -73,14 +71,14 @@ async def root() -> dict[str, str]:
 async def custom_swagger_ui_html() -> HTMLResponse:
     """Custom Swagger UI HTML.
 
-    Description:
+    :Description:
     - This function is used to create a custom swagger UI HTML page.
 
     :Args:
     - `None`
 
     :Returns:
-    - `None`
+    - `swagger_ui_html` (HTMLResponse): Swagger UI HTML page.
 
     """
     return get_swagger_ui_html(
@@ -104,14 +102,14 @@ async def custom_swagger_ui_html() -> HTMLResponse:
 async def custom_redoc_ui_html() -> HTMLResponse:
     """Custom Redoc UI HTML.
 
-    Description:
+    :Description:
     - This function is used to create a custom redoc UI HTML page.
 
     :Args:
     - `None`
 
     :Returns:
-    - `None`
+    - `redoc_ui_html` (HTMLResponse): Redoc UI HTML page.
 
     """
     return get_redoc_html(
