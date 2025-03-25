@@ -16,7 +16,7 @@ from sqlmodel.sql._expression_select_cls import SelectOfScalar
 
 from fastapi_boilerplate.database.session import DBSession
 
-from .model import BasePaginationData, Message, Model
+from .model import BasePaginationData, BaseUpdate, Message, Model
 
 
 class BaseRepository(Generic[Model]):
@@ -245,8 +245,7 @@ class BaseRepository(Generic[Model]):
     async def update_multiple_by_ids(
         self,
         db_session: DBSession,
-        record_ids: list[UUID | int],
-        records: list[SQLModel],
+        records: list[BaseUpdate[Model]],
     ) -> Sequence[Model]:
         """Update multiple records by their IDs.
 
@@ -255,15 +254,15 @@ class BaseRepository(Generic[Model]):
 
         :Args:
         - `db_session` (DBSession): SQLModel database session. **(Required)**
-        - `record_ids` (list[UUID | int]): List of record IDs.
-        **(Required)**
-        - `records` (list[SQLModel]): List of Model objects containing
+        - `records` (list[BaseUpdate[Model]]): List of Model objects containing
         updated fields. **(Required)**
 
         :Returns:
         - `Sequence[Model]`: List of updated records.
 
         """
+        record_ids: list[UUID | int] = [record.id for record in records]
+
         db_records: Sequence[Model] = await self.read_multiple_by_ids(
             db_session=db_session, record_ids=record_ids
         )

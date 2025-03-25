@@ -13,7 +13,7 @@ from sqlmodel import SQLModel
 
 from fastapi_boilerplate.database.session import DBSession
 
-from .model import BasePaginationData, Message, Model
+from .model import BasePaginationData, BaseUpdate, Message, Model
 from .repository import BaseRepository
 
 
@@ -146,7 +146,7 @@ class BaseService(Generic[Model]):
 
         :Returns:
         - `PaginationBase`: Paginated records along with following details:
-            - `current_page` (int): Current page number.
+            - `page` (int): Current page number.
             - `limit` (int): Number of records per page.
             - `total_pages` (int): Total number of pages.
             - `total_records` (int): Total number of records.
@@ -187,8 +187,7 @@ class BaseService(Generic[Model]):
     async def update_multiple_by_ids(
         self,
         db_session: DBSession,
-        record_ids: list[UUID | int],
-        records: list[SQLModel],
+        records: list[BaseUpdate[Model]],
     ) -> Sequence[Model]:
         """Update multiple records by their IDs.
 
@@ -197,8 +196,6 @@ class BaseService(Generic[Model]):
 
         :Args:
         - `db_session` (DBSession): SQLModel database session. **(Required)**
-        - `record_ids` (list[UUID | int]): List of record IDs.
-        **(Required)**
         - `records` (list[SQLModel]): List of Model objects containing
         updated fields. **(Required)**
 
@@ -207,7 +204,7 @@ class BaseService(Generic[Model]):
 
         """
         return await self.repository.update_multiple_by_ids(
-            db_session=db_session, record_ids=record_ids, records=records
+            db_session=db_session, records=records
         )
 
     async def delete_by_id(

@@ -12,6 +12,7 @@ from fastapi.openapi.docs import get_redoc_html, get_swagger_ui_html
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
+from fastapi_boilerplate.apps.route import router
 from fastapi_boilerplate.core.config import settings
 from fastapi_boilerplate.core.helper import custom_generate_unique_id
 
@@ -117,3 +118,7 @@ async def custom_redoc_ui_html() -> HTMLResponse:
         title=app.title + " - ReDoc",
         redoc_js_url="/static/redoc.standalone.js",
     )
+
+
+# Add all file routes to app
+app.include_router(router)

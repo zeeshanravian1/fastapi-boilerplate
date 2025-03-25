@@ -7,6 +7,7 @@ Description:
 
 from collections.abc import Sequence
 from typing import Generic, TypeVar
+from uuid import UUID
 
 from sqlmodel import Field, SQLModel
 
@@ -65,10 +66,10 @@ class BasePaginationData(SQLModel, Generic[Model]):
     """
 
     page: int = Field(default=1, gt=0)
-    limit: int = Field(default=10, gt=0)
-    total_pages: int = Field(default=0, ge=0)
+    limit: int = Field(default=10, ge=0)
+    total_pages: int = Field(default=0, gt=0)
     total_records: int = Field(default=0, ge=0)
-    records: Sequence[Model] = Field(default=[])
+    records: Sequence[Model]
 
 
 class BasePaginationRead(BaseRead[Model]):
@@ -86,3 +87,16 @@ class BasePaginationRead(BaseRead[Model]):
     """
 
     data: BasePaginationData[Model]  # type: ignore[assignment]
+
+
+class BaseUpdate(SQLModel, Generic[Model]):
+    """Base Update Model.
+
+    :Description:
+    - This class provides a generic update model for all tables.
+
+    :Attributes:
+    - `id` (UUID | int): Unique identifier for the record.
+    """
+
+    id: UUID | int

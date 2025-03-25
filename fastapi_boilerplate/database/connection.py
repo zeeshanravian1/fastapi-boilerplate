@@ -27,24 +27,16 @@ class Base(SQLModel):
 
     :Attributes:
     - `id` (UUID): Unique identifier for record.
-    - `is_deleted` (bool): Flag to mark record as deleted.
     - `created_at` (datetime): Timestamp when record was created.
     - `updated_at` (datetime | None): Timestamp when record was last updated.
-    - `deleted_at` (datetime | None): Timestamp when record was deleted.
 
     """
 
     id: UUID = Field(default_factory=uuid4, primary_key=True)
-    is_deleted: bool = Field(default=False)
     created_at: datetime = Field(
         sa_column=Column(DateTime(timezone=True), default=now())
     )
     updated_at: datetime | None = Field(
-        sa_column=Column(
-            DateTime(timezone=True), nullable=True, onupdate=now()
-        )
-    )
-    deleted_at: datetime | None = Field(
         sa_column=Column(
             DateTime(timezone=True), nullable=True, onupdate=now()
         )
