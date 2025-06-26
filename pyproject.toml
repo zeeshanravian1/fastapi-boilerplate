@@ -1,0 +1,90 @@
+[project]
+name = "fastapi-boilerplate"
+version = "0.1.0"
+description = "FastAPI BoilerPlate"
+authors = [
+    {name = "Zeeshan Asim",email = "zeeshanravian1@gmail.com"}
+]
+license = {text = "MIT"}
+readme = "README.md"
+
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi[all]>=0.115.13",
+    "psycopg[binary,pool]>=3.2.9",
+    "sqlmodel>=0.0.24",
+]
+
+[dependency-groups]
+dev = [
+    "bandit>=1.8.5",
+    "black>=25.1.0",
+    "coverage>=7.9.1",
+    "gitlint>=0.19.1",
+    "httpie>=3.2.4",
+    "ipykernel>=6.29.5",
+    "jupyter>=1.1.1",
+    "logfire>=3.21.1",
+    "mypy>=1.16.1",
+    "pre-commit>=4.2.0",
+    "pyright>=1.1.402",
+    "pytest-asyncio>=1.0.0",
+    "python-lsp-server[all]>=1.12.2",
+    "pyupgrade>=3.20.0",
+    "radon>=6.0.1",
+    "ruff>=0.12.0",
+    "skjold>=0.6.2",
+]
+
+[tool.pytest.ini_options]
+asyncio_default_fixture_loop_scope = "class"
+
+[tool.mypy]
+strict = true
+exclude = ["venv", ".venv", "alembic"]
+
+[tool.ruff]
+target-version = "py313"
+line-length = 79
+
+[tool.ruff.lint]
+extend-select = [
+    "D",        # pydocstyle
+    "E",        # pycodestyle errors
+    "W",        # pycodestyle warnings
+    "F",        # pyflakes
+    "I",        # isort
+    "B",        # flake8-bugbear
+    "C4",       # flake8-comprehensions
+    "UP",       # pyupgrade
+    "ARG001",   # unused arguments in functions
+    "RUF",      # ruff dev's own rules
+    "SIM",      # pyflakes simplicity
+    "C90",      # more complexity rules
+]
+ignore = [
+    "E501",     # line too long, handled by black
+    "B008",     # do not perform function calls in argument defaults
+    "W191",     # indentation contains tabs
+    "B904",     # Allow raising exceptions without from e, for HTTPException
+]
+
+[tool.ruff.lint.pyupgrade]
+# Preserve types, even if a file imports `from __future__ import annotations`.
+keep-runtime-typing = true
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
+split-on-trailing-comma = false
+
+[tool.skjold]
+sources = ["github", "pyup", "gemnasium"]  # Sources to check against.
+report_only = false                        # Exit with non-zero exit code on findings.
+report_format = 'cli'                      # Output findings as `json`. Default is 'cli'.
+cache_dir = '.skjold_cache'                # Cache location (default: `~/.skjold/cache`).
+cache_expires = 86400                      # Cache max. age.
+ignore_file = '.skjoldignore'              # Ignorefile location (default `.skjoldignore`).
+verbose = true                             # Be verbose.
