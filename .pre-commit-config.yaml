@@ -167,4 +167,4 @@ repos:
         language: system
         entry: ./scripts/radon_check.sh
         types: [python]
-        verbose: true
+        # verbose: true
