@@ -169,7 +169,7 @@ class Settings(BaseSettings):
     def _check_default_secret(self, var_name: str, value: str) -> None:
         if value == "changethis":
             message: str = (
-                f'The value of {var_name} is "changethis", '
+                f'Value of {var_name} is "changethis", '
                 "for security, please change it, at least for deployments."
             )
 

@@ -7,7 +7,7 @@ for all tables.
 """
 
 from datetime import datetime
-from uuid import UUID, uuid4
+from uuid import UUID, uuid4  # noqa: F401
 
 from sqlalchemy import Engine
 from sqlalchemy.sql.functions import now
@@ -26,13 +26,14 @@ class Base(SQLModel):
     - This is base model for all tables.
 
     :Attributes:
-    - `id` (UUID): Unique identifier for record.
+    - `id` (UUID | int): Unique identifier for record.
     - `created_at` (datetime): Timestamp when record was created.
     - `updated_at` (datetime | None): Timestamp when record was last updated.
 
     """
 
-    id: UUID = Field(default_factory=uuid4, primary_key=True)
+    id: int = Field(primary_key=True)
+    # id: UUID = Field(default_factory=uuid4, primary_key=True)
     created_at: datetime = Field(
         sa_column=Column(DateTime(timezone=True), default=now())
     )

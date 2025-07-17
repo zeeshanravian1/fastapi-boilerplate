@@ -10,29 +10,27 @@ readme = "README.md"
 
 requires-python = ">=3.13"
 dependencies = [
-    "fastapi[all]>=0.115.13",
+    "fastapi[all]>=0.116.1",
     "psycopg[binary,pool]>=3.2.9",
     "sqlmodel>=0.0.24",
 ]
 
 [dependency-groups]
 dev = [
-    "bandit>=1.8.5",
-    "black>=25.1.0",
-    "coverage>=7.9.1",
-    "gitlint>=0.19.1",
+    "bandit>=1.8.6",
+    "coverage>=7.9.2",
     "httpie>=3.2.4",
     "ipykernel>=6.29.5",
     "jupyter>=1.1.1",
-    "logfire>=3.21.1",
-    "mypy>=1.16.1",
+    "logfire>=3.24.2",
+    "mypy>=1.17.0",
     "pre-commit>=4.2.0",
-    "pyright>=1.1.402",
-    "pytest-asyncio>=1.0.0",
-    "python-lsp-server[all]>=1.12.2",
+    "pyright>=1.1.403",
+    "pytest-asyncio>=1.1.0",
+    "python-lsp-server[all]>=1.13.0",
     "pyupgrade>=3.20.0",
     "radon>=6.0.1",
-    "ruff>=0.12.0",
+    "ruff>=0.12.3",
     "skjold>=0.6.2",
 ]
 
