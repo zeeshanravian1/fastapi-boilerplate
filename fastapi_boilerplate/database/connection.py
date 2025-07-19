@@ -11,12 +11,11 @@ from uuid import UUID, uuid4  # noqa: F401
 
 from sqlalchemy import Engine
 from sqlalchemy.sql.functions import now
-from sqlmodel import DateTime, Field, MetaData, SQLModel, create_engine
+from sqlmodel import DateTime, Field, SQLModel, create_engine
 
 from fastapi_boilerplate.core.config import settings
 
 engine: Engine = create_engine(url=str(settings.SQLALCHEMY_DATABASE_URI))
-my_metadata: MetaData = MetaData()
 
 
 class Base(SQLModel):
