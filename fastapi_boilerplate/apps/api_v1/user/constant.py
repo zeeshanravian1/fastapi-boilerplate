@@ -6,3 +6,4 @@ Description:
 """
 
 USER_NOT_FOUND: str = "User not found"
+INACTIVE_USER: str = "User is inactive"

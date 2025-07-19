@@ -49,7 +49,7 @@ router = APIRouter(prefix="/user", tags=["User"])
 async def create_user(
     db_session: DBSession,
     user_service: Annotated[
-        UserService, Depends(ServiceInitializer(UserService))
+        UserService, Depends(dependency=ServiceInitializer(UserService))
     ],
     record: UserCreate,
 ) -> UserRead:
@@ -109,7 +109,7 @@ async def create_user(
 async def create_users(
     db_session: DBSession,
     user_service: Annotated[
-        UserService, Depends(ServiceInitializer(UserService))
+        UserService, Depends(dependency=ServiceInitializer(UserService))
     ],
     records: list[UserCreate],
 ) -> UserBulkRead:
@@ -171,7 +171,7 @@ async def create_users(
 async def read_users_by_ids(
     db_session: DBSession,
     user_service: Annotated[
-        UserService, Depends(ServiceInitializer(UserService))
+        UserService, Depends(dependency=ServiceInitializer(UserService))
     ],
     user_ids: Annotated[list[UUID | int], Query(...)],
 ) -> UserBulkRead:
@@ -220,7 +220,7 @@ async def read_users_by_ids(
 async def read_user_by_id(
     db_session: DBSession,
     user_service: Annotated[
-        UserService, Depends(ServiceInitializer(UserService))
+        UserService, Depends(dependency=ServiceInitializer(UserService))
     ],
     user_id: UUID | int,
 ) -> UserRead:
@@ -280,7 +280,7 @@ async def read_user_by_id(
 async def read_all_users(
     db_session: DBSession,
     user_service: Annotated[
-        UserService, Depends(ServiceInitializer(UserService))
+        UserService, Depends(dependency=ServiceInitializer(UserService))
     ],
     params: Annotated[PaginationQueryParams, Depends()],
 ) -> UserPaginationRead:
@@ -333,7 +333,7 @@ async def read_all_users(
 async def update_users(
     db_session: DBSession,
     user_service: Annotated[
-        UserService, Depends(ServiceInitializer(UserService))
+        UserService, Depends(dependency=ServiceInitializer(UserService))
     ],
     records: Sequence[UserBulkUpdate],
 ) -> UserBulkRead:
@@ -395,7 +395,7 @@ async def update_users(
 async def update_user(
     db_session: DBSession,
     user_service: Annotated[
-        UserService, Depends(ServiceInitializer(UserService))
+        UserService, Depends(dependency=ServiceInitializer(UserService))
     ],
     user_id: UUID | int,
     record: UserUpdate,
@@ -470,7 +470,7 @@ async def update_user(
 async def patch_users(
     db_session: DBSession,
     user_service: Annotated[
-        UserService, Depends(ServiceInitializer(UserService))
+        UserService, Depends(dependency=ServiceInitializer(UserService))
     ],
     records: Sequence[UserBulkPatch],
 ) -> UserBulkRead:
@@ -534,7 +534,7 @@ async def patch_users(
 async def patch_user(
     db_session: DBSession,
     user_service: Annotated[
-        UserService, Depends(ServiceInitializer(UserService))
+        UserService, Depends(dependency=ServiceInitializer(UserService))
     ],
     user_id: UUID | int,
     record: UserPatch,
@@ -613,7 +613,7 @@ async def patch_user(
 async def delete_users(
     db_session: DBSession,
     user_service: Annotated[
-        UserService, Depends(ServiceInitializer(UserService))
+        UserService, Depends(dependency=ServiceInitializer(UserService))
     ],
     user_ids: Annotated[list[UUID | int], Query(...)],
 ) -> None:
@@ -641,7 +641,7 @@ async def delete_users(
 async def delete_user(
     db_session: DBSession,
     user_service: Annotated[
-        UserService, Depends(ServiceInitializer(UserService))
+        UserService, Depends(dependency=ServiceInitializer(UserService))
     ],
     user_id: UUID | int,
 ) -> None:

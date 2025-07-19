@@ -15,8 +15,10 @@ dependencies = [
     "passlib>=1.7.4",
     "phonenumbers>=9.0.10",
     "psycopg[binary,pool]>=3.2.9",
+    "pyjwt>=2.10.1",
     "sqlmodel>=0.0.24",
     "types-passlib>=1.7.7.20250602",
+    "types-pyjwt>=1.7.1",
 ]
 
 [dependency-groups]
