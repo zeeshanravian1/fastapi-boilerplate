@@ -19,6 +19,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi_boilerplate.apps.route import router
 from fastapi_boilerplate.core.config import settings
 from fastapi_boilerplate.core.helper import custom_generate_unique_id
+from fastapi_boilerplate.database.connection import Base, engine
 
 
 # Application Lifespan Manager
@@ -37,6 +38,8 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     - Application runtime.
 
     """
+    Base.metadata.drop_all(bind=engine)
+    Base.metadata.create_all(bind=engine)
     yield
 
 

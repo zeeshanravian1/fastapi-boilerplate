@@ -64,7 +64,7 @@ async def create_role(
     - `role_description` (str): Description of role. **(Optional)**
 
     :Returns:
-    Role details along with following information:
+    Role details along with following fields:
     - `id` (UUID | int): Id of role.
     - `role_name` (str): Name of role.
     - `role_description` (str): Description of role.
@@ -104,7 +104,7 @@ async def create_roles(
     - `role_description` (str): Description of role. **(Optional)**
 
     :Returns:
-    List of role details along with following information:
+    List of role details along with following fields:
     - `id` (UUID | int): Id of role.
     - `role_name` (str): Name of role.
     - `role_description` (str): Description of role.
@@ -145,7 +145,7 @@ async def read_roles_by_ids(
     **(Required)**
 
     :Returns:
-    List of role details along with following information:
+    List of role details along with following fields:
     - `id` (UUID | int): Id of role.
     - `role_name` (str): Name of role.
     - `role_description` (str): Description of role.
@@ -182,11 +182,11 @@ async def read_role_by_id(
     - This route is used to retrieve a single role by its ID.
 
     :Args:
-    - `role_id` (UUID | int): ID of the role to retrieve.
+    - `role_id` (UUID | int): ID of role to retrieve.
     **(Required)**
 
     :Returns:
-    Role details along with following information:
+    Role details along with following fields:
     - `id` (UUID | int): Id of role.
     - `role_name` (str): Name of role.
     - `role_description` (str): Description of role.
@@ -234,7 +234,7 @@ async def read_all_roles(
     - This route is used to retrieve all roles.
 
     :Returns:
-    List of role details along with following information:
+    List of role details along with following fields:
     - `id` (UUID | int): Id of role.
     - `role_name` (str): Name of role.
     - `role_description` (str): Description of role.
@@ -284,7 +284,7 @@ async def update_roles(
     - `role_description` (str): Description of role. **(Optional)**
 
     :Returns:
-    List of updated role details along with following information:
+    List of updated role details along with following fields:
     - `id` (UUID | int): Id of role.
     - `role_name` (str): Name of role.
     - `role_description` (str): Description of role.
@@ -322,14 +322,14 @@ async def update_role(
     - This route is used to update a single role.
 
     :Args:
-    - `role_id` (UUID | int): ID of the role to update. **(Required)**
+    - `role_id` (UUID | int): ID of role to update. **(Required)**
 
     Role details to be updated with following fields:
     - `role_name` (str): Name of role. **(Required)**
     - `role_description` (str): Description of role. **(Optional)**
 
     :Returns:
-    Role details along with following information:
+    Role details along with following fields:
     - `id` (UUID | int): Id of role.
     - `role_name` (str): Name of role.
     - `role_description` (str): Description of role.
@@ -382,7 +382,7 @@ async def patch_roles(
     - `role_description` (str): Description of role. **(Optional)**
 
     :Returns:
-    List of updated role details along with following information:
+    List of updated role details along with following fields:
     - `id` (UUID | int): Id of role.
     - `role_name` (str): Name of role.
     - `role_description` (str): Description of role.
@@ -420,14 +420,14 @@ async def patch_role(
     - This route is used to partially update a single role.
 
     :Args:
-    - `role_id` (UUID | int): ID of the role to update. **(Required)**
+    - `role_id` (UUID | int): ID of role to update. **(Required)**
 
-    Role details to be updated with following fields:
+    Role details to be partially updated with following fields:
     - `role_name` (str): Name of role. **(Optional)**
     - `role_description` (str): Description of role. **(Optional)**
 
     :Returns:
-    Role details along with following information:
+    Role details along with following fields:
     - `id` (UUID | int): Id of role.
     - `role_name` (str): Name of role.
     - `role_description` (str): Description of role.
@@ -480,7 +480,7 @@ async def delete_roles(
     - `role_ids` (list[UUID | int]): List of role IDs to delete. **(Required)**
 
     :Returns:
-    None if successful, or an error response if roles not found.
+    - `None`
 
     """
     role_service.delete_bulk_by_ids(db_session=db_session, record_ids=role_ids)
@@ -505,10 +505,10 @@ async def delete_role(
     - This route is used to delete a single role by its ID.
 
     :Args:
-    - `role_id` (UUID | int): ID of the role to delete. **(Required)**
+    - `role_id` (UUID | int): ID of role to delete. **(Required)**
 
     :Returns:
-    None if successful, or an error response if role not found.
+    - `None`
 
     """
     result: bool = role_service.delete_by_id(

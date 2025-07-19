@@ -11,7 +11,7 @@ from uuid import UUID, uuid4  # noqa: F401
 
 from sqlalchemy import Engine
 from sqlalchemy.sql.functions import now
-from sqlmodel import Column, DateTime, Field, MetaData, SQLModel, create_engine
+from sqlmodel import DateTime, Field, MetaData, SQLModel, create_engine
 
 from fastapi_boilerplate.core.config import settings
 
@@ -35,15 +35,13 @@ class Base(SQLModel):
     id: int = Field(primary_key=True)
     # id: UUID = Field(default_factory=uuid4, primary_key=True)
     created_at: datetime = Field(
-        sa_column=Column(DateTime(timezone=True), default=now())
+        default=None,
+        sa_type=DateTime(timezone=True),  # type: ignore[call-overload]
+        sa_column_kwargs={"server_default": now()},
     )
     updated_at: datetime | None = Field(
-        sa_column=Column(
-            DateTime(timezone=True), nullable=True, onupdate=now()
-        )
+        default=None,
+        sa_type=DateTime(timezone=True),  # type: ignore[call-overload]
+        nullable=True,
+        sa_column_kwargs={"onupdate": now()},
     )
-
-    class ModelConfig:  # pylint: disable=too-few-public-methods
-        """Configuration for BaseTable."""
-
-        str_strip_whitespace = True

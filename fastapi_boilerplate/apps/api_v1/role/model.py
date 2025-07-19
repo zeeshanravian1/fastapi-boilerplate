@@ -8,6 +8,7 @@ Description:
 from collections.abc import Sequence
 
 from sqlmodel import Field, SQLModel
+from sqlmodel._compat import SQLModelConfig
 
 from fastapi_boilerplate.apps.base.model import (
     BaseBulkUpdate,
@@ -41,6 +42,10 @@ class RoleBase(SQLModel):
         min_length=1,
         max_length=255,
         schema_extra={"examples": ["Admin Role"]},
+    )
+
+    model_config = SQLModelConfig(
+        str_strip_whitespace=True,  # type: ignore[unused-ignore]
     )
 
 
@@ -200,6 +205,7 @@ class RolePatch(RoleBase):
     """
 
     role_name: str | None = Field(  # type: ignore[assignment]
+        default=None,
         min_length=1,
         max_length=255,
         unique=True,

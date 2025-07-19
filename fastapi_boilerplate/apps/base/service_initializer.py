@@ -6,58 +6,75 @@ dependencies.
 
 """
 
-from functools import _lru_cache_wrapper, lru_cache
+from typing import ClassVar, Self, cast
 
 
-class ServiceInitializer[T]:  # pylint: disable=too-few-public-methods
+class ServiceInitializer[T]:
     """Service Initializer Class.
 
     :Description:
-    - This class provides cached initialization for any service type.
-    - Can be used directly in FastAPI Depends() without wrapper functions.
+    - This class implements singleton pattern for service initialization.
+    - It can be used directly in FastAPI Depends() without wrapper functions.
 
     """
 
+    _cache: ClassVar[dict[type, "ServiceInitializer[object]"]] = {}
+
     def __init__(self, service_class: type[T]) -> None:
-        """Initialize with service class.
+        """Initialize ServiceInitializer instance.
+
+        :Description:
+        - This method initializes instance attributes.
+        - Only called once per service class due to singleton pattern.
 
         :Args:
-        - `service_class` (type[T]): The service class to initialize.
+        - `service_class` (type[T]): Service class to initialize.
         **(Required)**
+
+        :Returns:
+        - `None`
 
         """
         self._service_class: type[T] = service_class
-        self._get_cached_service: _lru_cache_wrapper[T] = lru_cache(maxsize=1)(
-            self._create_service
-        )
+        self._service_instance: T | None = None
 
-    def _create_service(self) -> T:
-        """Create service instance.
+    def __new__(cls, service_class: type[T]) -> "ServiceInitializer[T]":
+        """Create or return existing ServiceInitializer instance.
 
         :Description:
-        - This method creates a new instance of the service class.
+        - This method ensures only one ServiceInitializer instance per service
+        class.
 
         :Args:
-        - `None`
+        - `service_class` (type[T]): Service class to initialize.
+        **(Required)**
 
         :Returns:
-        - `instance` (T): New instance of the service.
+        - `instance` (ServiceInitializer[T]): Cached or new ServiceInitializer
+        instance.
 
         """
-        return self._service_class()
+        if service_class not in cls._cache:
+            instance: Self = super().__new__(cls)
+            cls._cache[service_class] = instance
+
+        return cast("ServiceInitializer[T]", cls._cache[service_class])
 
     def __call__(self) -> T:
-        """Make the class callable for FastAPI dependency injection.
+        """Make class callable for FastAPI dependency injection.
 
         :Description:
-        - This method makes the ServiceInitializer instance callable, allowing
-        it to be used directly with FastAPI's Depends().
+        - This method returns cached service instance or creates one if it
+        doesn't exist.
 
         :Args:
         - `None`
 
         :Returns:
-        - `instance` (T): Cached instance of the service.
+        - `instance` (T): Cached instance of service.
 
         """
-        return self._get_cached_service()
+        if self._service_instance is None:
+            self._service_instance = self._service_class()
+
+        return self._service_instance
