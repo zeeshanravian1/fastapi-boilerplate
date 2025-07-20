@@ -109,6 +109,7 @@ class UserBase(SQLModel):
         schema_extra={"examples": [True]},
     )
 
+    # Settings Configuration
     model_config = SQLModelConfig(
         str_strip_whitespace=True,  # type: ignore[unused-ignore]
     )

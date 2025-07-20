@@ -9,7 +9,6 @@ from enum import Enum
 
 TOKEN_TYPE: str = "Bearer"
 INCORRECT_PASSWORD: str = "Incorrect password"
-SUCCESS_LOGIN_MESSAGE: str = "Logged in successfully"
 
 
 class TokenType(str, Enum):

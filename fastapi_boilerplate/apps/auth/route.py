@@ -21,9 +21,8 @@ from fastapi_boilerplate.apps.base.service_initializer import (
 )
 from fastapi_boilerplate.database.session import DBSession
 
-from .constant import INCORRECT_PASSWORD, SUCCESS_LOGIN_MESSAGE
+from .constant import INCORRECT_PASSWORD
 from .model import (
-    LoginRead,
     LoginResponse,
     RefreshToken,
     RefreshTokenRead,
@@ -47,7 +46,7 @@ async def login(
         Depends(dependency=ServiceInitializer(AuthenticationService)),
     ],
     form_data: OAuth2PasswordRequestForm = Depends(),
-) -> LoginRead:
+) -> LoginResponse:
     """Login.
 
     :Description:
@@ -102,11 +101,7 @@ async def login(
                 },
             )
 
-    return LoginRead(
-        success=True,
-        message=SUCCESS_LOGIN_MESSAGE,
-        data=LoginResponse(**result.model_dump()),  # type: ignore
-    )
+    return LoginResponse(**result.model_dump())  # type: ignore[union-attr]
 
 
 @router.post(

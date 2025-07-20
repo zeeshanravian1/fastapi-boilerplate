@@ -58,7 +58,7 @@ class AuthenticationService(BaseService[User, UserCreate, UserUpdate]):
         - `form_data` (OAuth2PasswordRequestForm): Form data. **(Required)**
 
         :Returns:
-        - `record` (LoginRead): Login response.
+        - `record` (LoginResponse | str): Login response.
 
         """
         user: User | None = self.auth_repository.login(
@@ -112,7 +112,7 @@ class AuthenticationService(BaseService[User, UserCreate, UserUpdate]):
         - `token` (str): Token to refresh. **(Required)**
 
         :Returns:
-        - `record` (LoginRead): Login response with new token.
+        - `record` (RefreshTokenResponse | str): Login response with new token.
 
         """
         data: dict[str, Any] = decode(

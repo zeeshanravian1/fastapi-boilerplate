@@ -37,7 +37,6 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     - Application runtime.
 
     """
-    # Base.metadata.create_all(bind=engine)
     yield
 
 

@@ -40,26 +40,10 @@ class LoginResponse(SQLModel):
         schema_extra={"examples": [TokenType.REFRESH_TOKEN]},
     )
 
+    # Settings Configuration
     model_config = SQLModelConfig(
         str_strip_whitespace=True,  # type: ignore[unused-ignore]
     )
-
-
-class LoginRead(BaseRead[LoginResponse]):
-    """Login Read.
-
-    :Description:
-    - This class contains model for returning login data.
-
-    :Attributes:
-    - `success` (bool): Success status.
-    - `message` (str): Message for response.
-    - `data` (LoginResponse | None): Data for response.
-    - `error` (str | None): Error message if any.
-
-    """
-
-    data: LoginResponse | None = Field(default=None)
 
 
 class RefreshToken(SQLModel):
@@ -68,12 +52,16 @@ class RefreshToken(SQLModel):
     :Description:
     - This class is used to validate refresh token passed to API.
 
+    :Attributes:
+    - `refresh_token` (str): Refresh token to be validated.
+
     """
 
     refresh_token: str = Field(
         schema_extra={"examples": [TokenType.REFRESH_TOKEN]},
     )
 
+    # Settings Configuration
     model_config = SQLModelConfig(
         str_strip_whitespace=True,  # type: ignore[unused-ignore]
     )
@@ -94,13 +82,14 @@ class RefreshTokenResponse(SQLModel):
     token_type: str = Field(
         min_items=1,
         max_items=255,
-        schema_extra={"examples": ["Bearer"]},
+        schema_extra={"examples": [TOKEN_TYPE]},
     )
     access_token: str = Field(
         min_items=1,
         schema_extra={"examples": [TokenType.ACCESS_TOKEN]},
     )
 
+    # Settings Configuration
     model_config = SQLModelConfig(
         str_strip_whitespace=True,  # type: ignore[unused-ignore]
     )

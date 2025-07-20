@@ -44,6 +44,7 @@ class RoleBase(SQLModel):
         schema_extra={"examples": ["Admin Role"]},
     )
 
+    # Settings Configuration
     model_config = SQLModelConfig(
         str_strip_whitespace=True,  # type: ignore[unused-ignore]
     )

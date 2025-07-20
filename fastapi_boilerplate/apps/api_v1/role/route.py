@@ -19,6 +19,7 @@ from fastapi_boilerplate.apps.base.model import (
 from fastapi_boilerplate.apps.base.service_initializer import (
     ServiceInitializer,
 )
+from fastapi_boilerplate.core.security import CurrentUser
 from fastapi_boilerplate.database.session import DBSession
 
 from .constant import ROLE_NOT_FOUND
@@ -52,6 +53,7 @@ async def create_role(
         RoleService, Depends(dependency=ServiceInitializer(RoleService))
     ],
     record: RoleCreate,
+    _: CurrentUser,
 ) -> RoleRead:
     """Create a single role.
 
@@ -92,6 +94,7 @@ async def create_roles(
         RoleService, Depends(dependency=ServiceInitializer(RoleService))
     ],
     records: list[RoleCreate],
+    _: CurrentUser,
 ) -> RoleBulkRead:
     """Create multiple roles.
 
@@ -134,6 +137,7 @@ async def read_roles_by_ids(
         RoleService, Depends(dependency=ServiceInitializer(RoleService))
     ],
     role_ids: Annotated[list[UUID | int], Query(...)],
+    _: CurrentUser,
 ) -> RoleBulkRead:
     """Retrieve multiple roles by their IDs.
 
@@ -175,6 +179,7 @@ async def read_role_by_id(
         RoleService, Depends(dependency=ServiceInitializer(RoleService))
     ],
     role_id: UUID | int,
+    _: CurrentUser,
 ) -> RoleRead:
     """Retrieve a single role by its ID.
 
@@ -227,6 +232,7 @@ async def read_all_roles(
         RoleService, Depends(dependency=ServiceInitializer(RoleService))
     ],
     params: Annotated[PaginationQueryParams, Depends()],
+    _: CurrentUser,
 ) -> RolePaginationRead:
     """Retrieve all roles.
 
@@ -272,6 +278,7 @@ async def update_roles(
         RoleService, Depends(dependency=ServiceInitializer(RoleService))
     ],
     records: Sequence[RoleBulkUpdate],
+    _: CurrentUser,
 ) -> RoleBulkRead:
     """Update multiple roles.
 
@@ -315,6 +322,7 @@ async def update_role(
     ],
     role_id: UUID | int,
     record: RoleUpdate,
+    _: CurrentUser,
 ) -> RoleRead:
     """Update a single role.
 
@@ -370,6 +378,7 @@ async def patch_roles(
         RoleService, Depends(dependency=ServiceInitializer(RoleService))
     ],
     records: Sequence[RoleBulkPatch],
+    _: CurrentUser,
 ) -> RoleBulkRead:
     """Partially update multiple roles.
 
@@ -413,6 +422,7 @@ async def patch_role(
     ],
     role_id: UUID | int,
     record: RolePatch,
+    _: CurrentUser,
 ) -> RoleRead:
     """Partially update a single role.
 
@@ -470,6 +480,7 @@ async def delete_roles(
         RoleService, Depends(dependency=ServiceInitializer(RoleService))
     ],
     role_ids: Annotated[list[UUID | int], Query(...)],
+    _: CurrentUser,
 ) -> None:
     """Delete multiple roles.
 
@@ -498,6 +509,7 @@ async def delete_role(
         RoleService, Depends(dependency=ServiceInitializer(RoleService))
     ],
     role_id: UUID | int,
+    _: CurrentUser,
 ) -> None:
     """Delete a single role.
 

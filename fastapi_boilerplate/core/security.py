@@ -137,4 +137,4 @@ def get_current_active_user(
     return UserResponse.model_validate(obj=current_user)
 
 
-CurrentUser = Annotated[User, Depends(dependency=get_current_user)]
+CurrentUser = Annotated[User, Depends(dependency=get_current_active_user)]

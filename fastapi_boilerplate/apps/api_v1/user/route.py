@@ -19,6 +19,7 @@ from fastapi_boilerplate.apps.base.model import (
 from fastapi_boilerplate.apps.base.service_initializer import (
     ServiceInitializer,
 )
+from fastapi_boilerplate.core.security import CurrentUser
 from fastapi_boilerplate.database.session import DBSession
 
 from .constant import USER_NOT_FOUND
@@ -174,6 +175,7 @@ async def read_users_by_ids(
         UserService, Depends(dependency=ServiceInitializer(UserService))
     ],
     user_ids: Annotated[list[UUID | int], Query(...)],
+    _: CurrentUser,
 ) -> UserBulkRead:
     """Retrieve multiple users by their IDs.
 
@@ -223,6 +225,7 @@ async def read_user_by_id(
         UserService, Depends(dependency=ServiceInitializer(UserService))
     ],
     user_id: UUID | int,
+    _: CurrentUser,
 ) -> UserRead:
     """Retrieve a single user by its ID.
 
@@ -283,6 +286,7 @@ async def read_all_users(
         UserService, Depends(dependency=ServiceInitializer(UserService))
     ],
     params: Annotated[PaginationQueryParams, Depends()],
+    _: CurrentUser,
 ) -> UserPaginationRead:
     """Retrieve all users.
 
@@ -336,6 +340,7 @@ async def update_users(
         UserService, Depends(dependency=ServiceInitializer(UserService))
     ],
     records: Sequence[UserBulkUpdate],
+    _: CurrentUser,
 ) -> UserBulkRead:
     """Update multiple users.
 
@@ -399,6 +404,7 @@ async def update_user(
     ],
     user_id: UUID | int,
     record: UserUpdate,
+    _: CurrentUser,
 ) -> UserRead:
     """Update a single user.
 
@@ -473,6 +479,7 @@ async def patch_users(
         UserService, Depends(dependency=ServiceInitializer(UserService))
     ],
     records: Sequence[UserBulkPatch],
+    _: CurrentUser,
 ) -> UserBulkRead:
     """Partially update multiple users.
 
@@ -538,6 +545,7 @@ async def patch_user(
     ],
     user_id: UUID | int,
     record: UserPatch,
+    _: CurrentUser,
 ) -> UserRead:
     """Partially update a single user.
 
@@ -616,6 +624,7 @@ async def delete_users(
         UserService, Depends(dependency=ServiceInitializer(UserService))
     ],
     user_ids: Annotated[list[UUID | int], Query(...)],
+    _: CurrentUser,
 ) -> None:
     """Delete multiple users.
 
@@ -644,6 +653,7 @@ async def delete_user(
         UserService, Depends(dependency=ServiceInitializer(UserService))
     ],
     user_id: UUID | int,
+    _: CurrentUser,
 ) -> None:
     """Delete a single user.
 
