@@ -19,6 +19,9 @@ from fastapi.staticfiles import StaticFiles
 from fastapi_boilerplate.apps.route import router
 from fastapi_boilerplate.core.config import settings
 from fastapi_boilerplate.core.helper import custom_generate_unique_id
+from fastapi_boilerplate.middleware.exception_handling import (
+    exception_handling,
+)
 
 
 # Application Lifespan Manager
@@ -64,6 +67,9 @@ app.add_middleware(
     allow_headers=settings.BACKEND_CORS_HEADERS,
     allow_credentials=True,
 )
+
+# Custom http middleware
+app.middleware(middleware_type="http")(exception_handling)
 
 
 # Custom Exception Handler for RequestValidationError

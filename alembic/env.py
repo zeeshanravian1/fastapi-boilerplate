@@ -5,9 +5,13 @@ Description:
 
 """
 
+import asyncio
 from logging.config import fileConfig
 
-from sqlalchemy import Engine, engine_from_config, pool
+from sqlalchemy import pool
+from sqlalchemy.engine import Connection
+from sqlalchemy.ext.asyncio import async_engine_from_config
+from sqlalchemy.ext.asyncio.engine import AsyncEngine
 from sqlmodel import MetaData, SQLModel
 
 from alembic.context import (
@@ -25,6 +29,11 @@ from fastapi_boilerplate.core.load_models import load_all_models
 if config.config_file_name is not None:
     fileConfig(fname=config.config_file_name)
 
+# Set the database URL in the config object
+config.set_main_option(
+    name="sqlalchemy.url", value=str(settings.SQLALCHEMY_DATABASE_URI)
+)
+
 # add your model's MetaData object here
 # for 'autogenerate' support
 # from myapp import mymodel
@@ -37,11 +46,6 @@ target_metadata: MetaData = SQLModel.metadata
 # ... etc.
 
 
-def get_url() -> str:
-    """Get the database URL from settings."""
-    return str(settings.SQLALCHEMY_DATABASE_URI)
-
-
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode.
 
@@ -52,7 +56,7 @@ def run_migrations_offline() -> None:
     Calls to context.execute() here emit the given string to the script output.
 
     """
-    url: str = get_url()
+    url: str | None = config.get_main_option(name="sqlalchemy.url")
     configure(
         url=url,
         target_metadata=target_metadata,
@@ -64,32 +68,54 @@ def run_migrations_offline() -> None:
         run_migrations()
 
 
-def run_migrations_online() -> None:
-    """Run migrations in 'online' mode.
+def do_run_migrations(connection: Connection) -> None:
+    """Run migrations with the given connection.
 
-    In this scenario we need to create an Engine
-    and associate a connection with the context.
+    :Description:
+    - This function is used to run migrations with the given connection.
+
+    :Args:
+    - `connection`: (Connection) The connection to use for running migrations.
+    **(Required)**
+
+    :Returns:
+    - `None`
 
     """
-    configuration: dict[str, str] = config.get_section(
-        name=config.config_ini_section, default={}
-    )
-    configuration["sqlalchemy.url"] = get_url()
+    configure(connection=connection, target_metadata=target_metadata)
 
-    connectable: Engine = engine_from_config(
-        configuration=configuration,
+    with begin_transaction():
+        # Load all models before running migrations
+        load_all_models()
+
+        run_migrations()
+
+
+async def run_async_migrations() -> None:
+    """Run migrations in 'online' mode using async engine.
+
+    :Description:
+    - In this scenario we need to create an Engine and associate a connection
+    with the context.
+
+    """
+    connectable: AsyncEngine = async_engine_from_config(
+        configuration=config.get_section(
+            name=config.config_ini_section, default={}
+        ),
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
 
-    with connectable.connect() as connection:
-        configure(connection=connection, target_metadata=target_metadata)
+    async with connectable.connect() as connection:
+        await connection.run_sync(fn=do_run_migrations)
 
-        with begin_transaction():
-            # Load all models before running migrations
-            load_all_models()
+    await connectable.dispose()
 
-            run_migrations()
+
+def run_migrations_online() -> None:
+    """Run migrations in 'online' mode."""
+    asyncio.run(main=run_async_migrations())
 
 
 if is_offline_mode():

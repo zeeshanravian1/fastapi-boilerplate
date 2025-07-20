@@ -66,7 +66,9 @@ class UserBase(SQLModel):
         regex=r"^[a-zA-Z0-9_.-]+$",
         schema_extra={"examples": ["johndoe"]},
     )
-    email: EmailStr = Field(schema_extra={"examples": ["johndoe@example.com"]})
+    email: EmailStr = Field(
+        unique=True, schema_extra={"examples": ["johndoe@example.com"]}
+    )
     address: str | None = Field(
         default=None,
         min_length=1,
