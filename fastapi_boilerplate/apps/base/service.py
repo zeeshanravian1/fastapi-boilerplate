@@ -128,6 +128,28 @@ class BaseService[
             db_session=db_session, record_ids=record_ids
         )
 
+    def read_by_field(
+        self,
+        db_session: DBSession,
+        field: str,
+        value: int | UUID | float | str | bool,
+    ) -> Model | None:
+        """Retrieve a single record by a specific field.
+
+        :Args:
+        - `db_session` (DBSession): SQLModel database session. **(Required)**
+        - `field` (str): Field name to filter by. **(Required)**
+        - `value` (int | UUID | float | str | bool): Value to match for the
+        specified field. **(Required)**
+
+        :Returns:
+        - `record` (Model | None): Retrieved record, or None if not found.
+
+        """
+        return self.repository.read_by_field(
+            db_session=db_session, field=field, value=value
+        )
+
     def read_all(
         self,
         db_session: DBSession,

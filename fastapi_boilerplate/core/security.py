@@ -6,7 +6,8 @@ Description:
 """
 
 from datetime import UTC, datetime, timedelta
-from typing import Annotated, Any
+from typing import Annotated
+from uuid import UUID
 
 from fastapi import Depends, HTTPException, Security, status
 from fastapi.security import OAuth2PasswordBearer
@@ -83,15 +84,15 @@ def get_current_user(
     )
 
     try:
-        payload: dict[str, Any] = decode(
+        payload: dict[str, int | UUID | float | str | bool] = decode(
             jwt=access_token,
             key=settings.SECRET_KEY,
             algorithms=[settings.ALGORITHM],
         )
 
-        user_id: int | None = payload.get("id")
-        user_name: str | None = payload.get("username")
-        user_email: str | None = payload.get("email")
+        user_id: int | None = payload.get("id")  # type: ignore[assignment]
+        user_name: str | None = payload.get("username")  # type: ignore
+        user_email: str | None = payload.get("email")  # type: ignore
 
         if user_name is None or user_email is None:
             raise credentials_exception

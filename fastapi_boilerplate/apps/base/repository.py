@@ -7,7 +7,6 @@ Description:
 
 import math
 from collections.abc import Sequence
-from typing import Any
 from uuid import UUID
 
 from sqlalchemy import ColumnElement
@@ -137,6 +136,30 @@ class BaseRepository[
 
         return list(db_session.exec(statement=query).all())
 
+    def read_by_field(
+        self,
+        db_session: DBSession,
+        field: str,
+        value: int | UUID | float | str | bool,
+    ) -> Model | None:
+        """Retrieve a single record by a specific field.
+
+        :Args:
+        - `db_session` (DBSession): SQLModel database session. **(Required)**
+        - `field` (str): Field name to filter by. **(Required)**
+        - `value` (int | UUID | float | str | bool): Value to match for the
+        specified field. **(Required)**
+
+        :Returns:
+        - `record` (Model | None): Retrieved record, or None if not found.
+
+        """
+        query: SelectOfScalar[Model] = select(self._model).where(
+            col(column_expression=getattr(self._model, field)).in_([value])
+        )
+
+        return db_session.exec(statement=query).one_or_none()
+
     def read_all(
         self,
         db_session: DBSession,
@@ -194,8 +217,8 @@ class BaseRepository[
             main_query = main_query.where(search_filter)
 
         # Apply ordering and pagination
-        order_attr: InstrumentedAttribute[Any] = getattr(
-            self._model, order_column
+        order_attr: InstrumentedAttribute[int | UUID | float | str | bool] = (
+            getattr(self._model, order_column)
         )
 
         main_query = main_query.order_by(

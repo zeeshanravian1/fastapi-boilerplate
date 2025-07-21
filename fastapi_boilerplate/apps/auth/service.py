@@ -5,7 +5,7 @@ Description:
 
 """
 
-from typing import Any
+from uuid import UUID
 
 from fastapi.security import OAuth2PasswordRequestForm
 from jwt import decode
@@ -115,14 +115,15 @@ class AuthenticationService(BaseService[User, UserCreate, UserUpdate]):
         - `record` (RefreshTokenResponse | str): Login response with new token.
 
         """
-        data: dict[str, Any] = decode(
+        data: dict[str, int | UUID | float | str | bool] = decode(
             jwt=token,
             key=settings.SECRET_KEY,
             algorithms=[settings.ALGORITHM],
         )
 
         user: User | None = super().read_by_id(
-            db_session=db_session, record_id=data["id"]
+            db_session=db_session,
+            record_id=data["id"],  # type: ignore[arg-type]
         )
 
         if not user:
@@ -138,7 +139,8 @@ class AuthenticationService(BaseService[User, UserCreate, UserUpdate]):
         }
 
         access_token: str = create_token(
-            data=data, token_type=TokenType.ACCESS_TOKEN
+            data=data,  # type: ignore[arg-type]
+            token_type=TokenType.ACCESS_TOKEN,
         )
 
         return RefreshTokenResponse(

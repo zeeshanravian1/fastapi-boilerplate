@@ -6,7 +6,7 @@ Description:
 """
 
 import logging
-from typing import Any
+from collections.abc import Awaitable, Callable
 
 from fastapi import Request, Response, status
 from fastapi.responses import ORJSONResponse
@@ -32,7 +32,7 @@ exception_logger: logging.Logger = logging.getLogger(__name__)
 
 
 async def exception_handling(
-    request: Request, call_next: Any
+    request: Request, call_next: Callable[[Request], Awaitable[Response]]
 ) -> ORJSONResponse | Response:
     """Exception Handling Middleware.
 
