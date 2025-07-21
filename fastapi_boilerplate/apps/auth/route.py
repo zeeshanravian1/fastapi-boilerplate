@@ -2,7 +2,7 @@
 
 Description:
 - This module is responsible for handling auth routes.
-- It is used to login, refresh token, logout user.
+- It is used to login, refresh token.
 
 """
 
@@ -43,7 +43,9 @@ async def login(
     db_session: DBSession,
     auth_service: Annotated[
         AuthenticationService,
-        Depends(dependency=ServiceInitializer(AuthenticationService)),
+        Depends(
+            dependency=ServiceInitializer(service_class=AuthenticationService)
+        ),
     ],
     form_data: OAuth2PasswordRequestForm = Depends(),
 ) -> LoginResponse:
@@ -115,7 +117,9 @@ async def refresh_token(
     token: RefreshToken,
     auth_service: Annotated[
         AuthenticationService,
-        Depends(dependency=ServiceInitializer(AuthenticationService)),
+        Depends(
+            dependency=ServiceInitializer(service_class=AuthenticationService)
+        ),
     ],
 ) -> RefreshTokenRead:
     """Refresh Token.

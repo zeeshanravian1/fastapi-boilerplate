@@ -50,7 +50,8 @@ router = APIRouter(prefix="/role", tags=["Role"])
 async def create_role(
     db_session: DBSession,
     role_service: Annotated[
-        RoleService, Depends(dependency=ServiceInitializer(RoleService))
+        RoleService,
+        Depends(dependency=ServiceInitializer(service_class=RoleService)),
     ],
     record: RoleCreate,
     _: CurrentUser,
@@ -91,7 +92,8 @@ async def create_role(
 async def create_roles(
     db_session: DBSession,
     role_service: Annotated[
-        RoleService, Depends(dependency=ServiceInitializer(RoleService))
+        RoleService,
+        Depends(dependency=ServiceInitializer(service_class=RoleService)),
     ],
     records: list[RoleCreate],
     _: CurrentUser,
@@ -134,7 +136,8 @@ async def create_roles(
 async def read_roles_by_ids(
     db_session: DBSession,
     role_service: Annotated[
-        RoleService, Depends(dependency=ServiceInitializer(RoleService))
+        RoleService,
+        Depends(dependency=ServiceInitializer(service_class=RoleService)),
     ],
     role_ids: Annotated[list[UUID | int], Query(...)],
     _: CurrentUser,
@@ -176,7 +179,8 @@ async def read_roles_by_ids(
 async def read_role_by_id(
     db_session: DBSession,
     role_service: Annotated[
-        RoleService, Depends(dependency=ServiceInitializer(RoleService))
+        RoleService,
+        Depends(dependency=ServiceInitializer(service_class=RoleService)),
     ],
     role_id: UUID | int,
     _: CurrentUser,
@@ -229,7 +233,8 @@ async def read_role_by_id(
 async def read_all_roles(
     db_session: DBSession,
     role_service: Annotated[
-        RoleService, Depends(dependency=ServiceInitializer(RoleService))
+        RoleService,
+        Depends(dependency=ServiceInitializer(service_class=RoleService)),
     ],
     params: Annotated[PaginationQueryParams, Depends()],
     _: CurrentUser,
@@ -275,7 +280,8 @@ async def read_all_roles(
 async def update_roles(
     db_session: DBSession,
     role_service: Annotated[
-        RoleService, Depends(dependency=ServiceInitializer(RoleService))
+        RoleService,
+        Depends(dependency=ServiceInitializer(service_class=RoleService)),
     ],
     records: Sequence[RoleBulkUpdate],
     _: CurrentUser,
@@ -318,7 +324,8 @@ async def update_roles(
 async def update_role(
     db_session: DBSession,
     role_service: Annotated[
-        RoleService, Depends(dependency=ServiceInitializer(RoleService))
+        RoleService,
+        Depends(dependency=ServiceInitializer(service_class=RoleService)),
     ],
     role_id: UUID | int,
     record: RoleUpdate,
@@ -375,7 +382,8 @@ async def update_role(
 async def patch_roles(
     db_session: DBSession,
     role_service: Annotated[
-        RoleService, Depends(dependency=ServiceInitializer(RoleService))
+        RoleService,
+        Depends(dependency=ServiceInitializer(service_class=RoleService)),
     ],
     records: Sequence[RoleBulkPatch],
     _: CurrentUser,
@@ -418,7 +426,8 @@ async def patch_roles(
 async def patch_role(
     db_session: DBSession,
     role_service: Annotated[
-        RoleService, Depends(dependency=ServiceInitializer(RoleService))
+        RoleService,
+        Depends(dependency=ServiceInitializer(service_class=RoleService)),
     ],
     role_id: UUID | int,
     record: RolePatch,
@@ -477,7 +486,8 @@ async def patch_role(
 async def delete_roles(
     db_session: DBSession,
     role_service: Annotated[
-        RoleService, Depends(dependency=ServiceInitializer(RoleService))
+        RoleService,
+        Depends(dependency=ServiceInitializer(service_class=RoleService)),
     ],
     role_ids: Annotated[list[UUID | int], Query(...)],
     _: CurrentUser,
@@ -506,7 +516,8 @@ async def delete_roles(
 async def delete_role(
     db_session: DBSession,
     role_service: Annotated[
-        RoleService, Depends(dependency=ServiceInitializer(RoleService))
+        RoleService,
+        Depends(dependency=ServiceInitializer(service_class=RoleService)),
     ],
     role_id: UUID | int,
     _: CurrentUser,

@@ -121,8 +121,8 @@ class AuthenticationService(BaseService[User, UserCreate, UserUpdate]):
             algorithms=[settings.ALGORITHM],
         )
 
-        user: User | None = self.auth_repository.refresh_token(
-            db_session=db_session, user_id=data["id"]
+        user: User | None = super().read_by_id(
+            db_session=db_session, record_id=data["id"]
         )
 
         if not user:

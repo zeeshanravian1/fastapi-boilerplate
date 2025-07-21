@@ -52,27 +52,3 @@ class AuthenticationRepository(BaseRepository[User, UserCreate, UserUpdate]):
         )
 
         return db_session.exec(statement=query).one_or_none()
-
-    def refresh_token(
-        self,
-        db_session: DBSession,
-        user_id: int,
-    ) -> User | None:
-        """Refresh Token.
-
-        :Description:
-        - This method refreshes authentication token.
-
-        :Args:
-        - `db_session` (DBSession): Database session. **(Required)**
-        - `user_id` (int): ID of user. **(Required)**
-
-        :Returns:
-        - `record` (User | None): User record.
-
-        """
-        query: SelectOfScalar[User] = select(User).where(
-            col(column_expression=User.id) == user_id
-        )
-
-        return db_session.exec(statement=query).one_or_none()
