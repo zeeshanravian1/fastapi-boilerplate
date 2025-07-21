@@ -5,6 +5,8 @@ Description:
 
 """
 
+import re
+
 from passlib.context import CryptContext
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -43,3 +45,107 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     return bool(
         pwd_context.verify(secret=plain_password, hash=hashed_password)
     )
+
+
+def validate_contact(contact: str) -> str:
+    """Validate Contact Number.
+
+    :Description:
+    - This method is used to validate contact number data.
+
+    :Args:
+    - `contact` (str): Contact number to validate. **(Required)**
+
+    :Returns:
+    - `contact` (str): Validated contact number.
+
+    """
+    if contact is None:
+        return contact
+
+    return str(contact).replace("tel:", "")
+
+
+def validate_username(username: str) -> str:
+    """Username Validator.
+
+    :Description:
+    - This method is used to validate username data.
+
+    :Args:
+    - `username` (str): Username to validate. **(Required)**
+
+    :Returns:
+    - `username` (str): Validated username with lowered.
+
+    """
+    if not re.search(r"^[a-zA-Z0-9_.-]+$", username):
+        raise ValueError(
+            "Username can only contain alphabets, numbers, "
+            "underscores, hyphens, and periods"
+        )
+
+    return username.lower()
+
+
+def validate_email(email: str) -> str:
+    """Validate Email.
+
+    :Description:
+    - This method is used to validate email.
+
+    :Args:
+    - `email` (str): Email to validate. **(Required)**
+
+    :Returns:
+    - `email` (str): Validated email with lowered.
+
+    """
+    return email.lower()
+
+
+def validate_postal_code(postal_code: str) -> str:
+    """Validate Postal Code.
+
+    :Description:
+    - This method is used to validate postal code data.
+
+    :Args:
+    - `postal_code` (str): Postal code to validate. **(Required)**
+
+    :Returns:
+    - `postal_code` (str): Validated postal code.
+
+    """
+    if not re.match(r"^\d{5}(-\d{4})?$", postal_code):
+        raise ValueError(
+            "Postal code must be in format '12345' or '12345-6789'"
+        )
+
+    return postal_code
+
+
+def validate_password(password: str) -> str:
+    """Validate Password.
+
+    :Description:
+    - This method is used to validate password data.
+
+    :Args:
+    - `password` (str): Password to validate. **(Required)**
+
+    :Returns:
+    - `password` (str): Validated password.
+
+    """
+    if not re.search(
+        r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#^()_+-/])"
+        r"[A-Za-z\d@$!%*?&#^()_+-/]{8,}$",
+        password,
+    ):
+        raise ValueError(
+            "Password must contain at least one lowercase letter, "
+            "one uppercase letter, one number, and one special character"
+        )
+
+    return password

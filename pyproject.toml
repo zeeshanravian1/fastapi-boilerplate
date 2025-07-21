@@ -11,6 +11,7 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "alembic>=1.16.4",
+    "fastapi-mail>=1.5.0",
     "fastapi[all]>=0.116.1",
     "passlib[bcrypt]>=1.7.4",
     "phonenumbers>=9.0.10",
@@ -26,7 +27,7 @@ dev = [
     "bandit>=1.8.6",
     "coverage>=7.9.2",
     "httpie>=3.2.4",
-    "ipykernel>=6.29.5",
+    "ipykernel>=6.30.0",
     "jupyter>=1.1.1",
     "logfire>=3.25.0",
     "mypy>=1.17.0",

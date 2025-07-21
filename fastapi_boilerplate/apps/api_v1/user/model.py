@@ -21,6 +21,13 @@ from fastapi_boilerplate.apps.base.model import (
 from fastapi_boilerplate.database.connection import Base
 
 from .constant import PASSWORD, PASSWORD_CHANGE_SUCCESS
+from .helper import (
+    validate_contact,
+    validate_email,
+    validate_password,
+    validate_postal_code,
+    validate_username,
+)
 
 
 class UserBase(SQLModel):
@@ -34,7 +41,7 @@ class UserBase(SQLModel):
     - `last_name` (str): Last name of user.
     - `contact_no` (str | None): Contact number of user.
     - `username` (str): Username of user.
-    - `email` (str): Email of user.
+    - `email` (EmailStr): Email of user.
     - `address` (str | None): Address of user.
     - `city` (str | None): City of user.
     - `state` (str | None): State of user.
@@ -65,7 +72,6 @@ class UserBase(SQLModel):
         min_length=1,
         max_length=255,
         unique=True,
-        regex=r"^[a-zA-Z0-9_.-]+$",
         schema_extra={"examples": ["johndoe"]},
     )
     email: EmailStr = Field(
@@ -99,7 +105,6 @@ class UserBase(SQLModel):
         default=None,
         min_length=1,
         max_length=20,
-        regex=r"^\d{5}(-\d{4})?$",
         schema_extra={"examples": ["62701", "62701-1234"]},
     )
     profile_image_path: str | None = Field(
@@ -118,14 +123,13 @@ class UserBase(SQLModel):
         str_strip_whitespace=True,  # type: ignore[unused-ignore]
     )
 
-    @field_validator("contact_no", mode="after")
-    @classmethod
-    def validate_contact_no(cls, value: str | None) -> str | None:
-        """Validate contact number to remove 'tel:' prefix."""
-        if value is None:
-            return value
-
-        return str(value).replace("tel:", "")
+    # Custom Validators
+    username_validator = field_validator("username")(validate_username)
+    email_validator = field_validator("email")(validate_email)
+    contact_no_validator = field_validator("contact_no")(validate_contact)
+    postal_code_validator = field_validator("postal_code")(
+        validate_postal_code
+    )
 
 
 class User(Base, UserBase, table=True):
@@ -140,7 +144,7 @@ class User(Base, UserBase, table=True):
     - `last_name` (str): Last name of user.
     - `contact_no` (str | None): Contact number of user.
     - `username` (str): Username of user.
-    - `email` (str): Email of user.
+    - `email` (EmailStr): Email of user.
     - `password` (str): Password of user.
     - `address` (str | None): Address of user.
     - `city` (str | None): City of user.
@@ -172,7 +176,7 @@ class UserCreate(UserBase):
     - `last_name` (str): Last name of user.
     - `contact_no` (str | None): Contact number of user.
     - `username` (str): Username of user.
-    - `email` (str): Email of user.
+    - `email` (EmailStr): Email of user.
     - `password` (str): Password of user.
     - `address` (str | None): Address of user.
     - `city` (str | None): City of user.
@@ -190,6 +194,9 @@ class UserCreate(UserBase):
         schema_extra={"examples": [PASSWORD]},
     )
 
+    # Custom Validators
+    password_validator = field_validator("password")(validate_password)
+
 
 class UserResponse(Base, UserBase):
     """User Response Model.
@@ -203,7 +210,7 @@ class UserResponse(Base, UserBase):
     - `last_name` (str): Last name of user.
     - `contact_no` (str | None): Contact number of user.
     - `username` (str): Username of user.
-    - `email` (str): Email of user.
+    - `email` (EmailStr): Email of user.
     - `address` (str | None): Address of user.
     - `city` (str | None): City of user.
     - `state` (str | None): State of user.
@@ -298,7 +305,7 @@ class UserUpdate(UserBase):
     - `last_name` (str): Last name of user.
     - `contact_no` (str | None): Contact number of user.
     - `username` (str): Username of user.
-    - `email` (str): Email of user.
+    - `email` (EmailStr): Email of user.
     - `address` (str | None): Address of user.
     - `city` (str | None): City of user.
     - `state` (str | None): State of user.
@@ -336,7 +343,7 @@ class UserPatch(UserBase):
     - `last_name` (str | None): Last name of user.
     - `contact_no` (str | None): Contact number of user.
     - `username` (str | None): Username of user.
-    - `email` (str | None): Email of user.
+    - `email` (EmailStr | None): Email of user.
     - `address` (str | None): Address of user.
     - `city` (str | None): City of user.
     - `state` (str | None): State of user.
@@ -361,10 +368,6 @@ class UserPatch(UserBase):
     )
     username: str | None = Field(  # type: ignore[assignment]
         default=None,
-        min_length=1,
-        max_length=255,
-        unique=True,
-        regex=r"^[a-zA-Z0-9_.-]+$",
         schema_extra={"examples": ["johndoe"]},
     )
     email: EmailStr | None = Field(  # type: ignore[assignment]
@@ -415,6 +418,10 @@ class PasswordChange(SQLModel):
     model_config = SQLModelConfig(
         str_strip_whitespace=True,  # type: ignore[unused-ignore]
     )
+
+    # Custom Validators
+    old_password_validator = field_validator("old_password")(validate_password)
+    new_password_validator = field_validator("new_password")(validate_password)
 
 
 class PasswordChangeRead(BaseRead[UserResponse]):

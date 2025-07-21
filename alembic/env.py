@@ -24,12 +24,12 @@ from alembic.context import (
 from fastapi_boilerplate.core.config import settings
 from fastapi_boilerplate.core.load_models import load_all_models
 
-# Interpret the config file for Python logging.
+# Interpret config file for Python logging.
 # This line sets up loggers basically.
 if config.config_file_name is not None:
     fileConfig(fname=config.config_file_name)
 
-# Set the database URL in the config object
+# Set database URL in config object
 config.set_main_option(
     name="sqlalchemy.url", value=str(settings.SQLALCHEMY_DATABASE_URI)
 )
@@ -40,7 +40,7 @@ config.set_main_option(
 # target_metadata = mymodel.Base.metadata
 target_metadata: MetaData = SQLModel.metadata
 
-# other values from the config, defined by the needs of env.py,
+# other values from config, defined by needs of env.py,
 # can be acquired:
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
@@ -49,11 +49,11 @@ target_metadata: MetaData = SQLModel.metadata
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode.
 
-    This configures the context with just a URL and not an Engine, though an
-    Engine is acceptable here as well. By skipping the Engine creation we don't
-    even need a DBAPI to be available.
+    This configures context with just a URL and not an Engine, though an Engine
+    is acceptable here as well. By skipping Engine creation we don't even need
+    a DBAPI to be available.
 
-    Calls to context.execute() here emit the given string to the script output.
+    Calls to context.execute() here emit given string to script output.
 
     """
     url: str | None = config.get_main_option(name="sqlalchemy.url")
@@ -69,13 +69,13 @@ def run_migrations_offline() -> None:
 
 
 def do_run_migrations(connection: Connection) -> None:
-    """Run migrations with the given connection.
+    """Run migrations with given connection.
 
     :Description:
-    - This function is used to run migrations with the given connection.
+    - This function is used to run migrations with given connection.
 
     :Args:
-    - `connection`: (Connection) The connection to use for running migrations.
+    - `connection`: (Connection) Connection to use for running migrations.
     **(Required)**
 
     :Returns:
@@ -96,7 +96,7 @@ async def run_async_migrations() -> None:
 
     :Description:
     - In this scenario we need to create an Engine and associate a connection
-    with the context.
+    with context.
 
     """
     connectable: AsyncEngine = async_engine_from_config(

@@ -703,7 +703,7 @@ async def password_change(
     """Change password of a single user.
 
     :Description:
-    - This route is used to change the password of a single user.
+    - This route is used to change password of a single user.
 
     :Args:
     User details to be updated with following fields:
