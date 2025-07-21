@@ -5,11 +5,24 @@ Description:
 
 """
 
+from uuid import UUID
+
 from fastapi_boilerplate.apps.base.service import BaseService
 from fastapi_boilerplate.database.session import DBSession
 
-from .helper import get_password_hash
-from .model import User, UserCreate, UserUpdate
+from .constant import (
+    INCORRECT_PASSWORD,
+    PASSWORD_CHANGE_SUCCESS,
+    USER_NOT_FOUND,
+)
+from .helper import get_password_hash, verify_password
+from .model import (
+    PasswordChange,
+    PasswordChangeRead,
+    User,
+    UserCreate,
+    UserUpdate,
+)
 from .repository import UserRepository
 
 
@@ -67,3 +80,51 @@ class UserService(BaseService[User, UserCreate, UserUpdate]):
             record.password = get_password_hash(password=record.password)
 
         return super().bulk_create(db_session=db_session, records=records)
+
+    def password_change(
+        self,
+        db_session: DBSession,
+        record_id: UUID | int,
+        record: PasswordChange,
+    ) -> PasswordChangeRead | str:
+        """Change User Password.
+
+        :Description:
+        - This method changes user password.
+
+        :Args:
+        - `db_session` (DBSession): Database session. **(Required)**
+        - `record_id` (int): User ID. **(Required)**
+        - `record` (PasswordChange): Password change request. **(Required)**
+
+        :Returns:
+        - `record` (PasswordChangeRead): Password change response.
+
+        """
+        user: User | None = super().read_by_id(
+            db_session=db_session, record_id=record_id
+        )
+
+        if not user:
+            return USER_NOT_FOUND
+
+        # Verify old password
+        if not verify_password(
+            plain_password=record.old_password,
+            hashed_password=user.password,
+        ):
+            return INCORRECT_PASSWORD
+
+        # Update password
+        user.password = get_password_hash(password=record.new_password)
+
+        super().update_by_id(
+            db_session=db_session,
+            record_id=record_id,
+            record=user,  # type: ignore[arg-type]
+        )
+
+        return PasswordChangeRead(
+            message=PASSWORD_CHANGE_SUCCESS,
+            data=None,
+        )

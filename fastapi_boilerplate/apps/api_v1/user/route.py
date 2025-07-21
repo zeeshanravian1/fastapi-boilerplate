@@ -24,6 +24,8 @@ from fastapi_boilerplate.database.session import DBSession
 
 from .constant import USER_NOT_FOUND
 from .model import (
+    PasswordChange,
+    PasswordChangeRead,
     User,
     UserBulkPatch,
     UserBulkRead,
@@ -681,3 +683,55 @@ async def delete_user(
                 "error": None,
             },
         )
+
+
+# Change password of a single user route
+@router.post(
+    path="/password-change/",
+    status_code=status.HTTP_200_OK,
+    summary="Change password of a user",
+    response_description="User password changed successfully",
+)
+async def password_change(
+    db_session: DBSession,
+    user_service: Annotated[
+        UserService, Depends(dependency=ServiceInitializer(UserService))
+    ],
+    record: PasswordChange,
+    current_user: CurrentUser,
+) -> PasswordChangeRead:
+    """Change password of a single user.
+
+    :Description:
+    - This route is used to change the password of a single user.
+
+    :Args:
+    User details to be updated with following fields:
+    - `old_password` (str): Old password of user. **(Required)**
+    - `new_password` (str): New password of user. **(Required)**
+
+    :Returns:
+    - `message` (str): Success message.
+
+    """
+    result: PasswordChangeRead | str = user_service.password_change(
+        db_session=db_session, record_id=current_user.id, record=record
+    )
+
+    if isinstance(result, str):
+        status_code: int = (
+            status.HTTP_404_NOT_FOUND
+            if result == USER_NOT_FOUND
+            else status.HTTP_400_BAD_REQUEST
+        )
+        return ORJSONResponse(  # type: ignore[return-value]
+            status_code=status_code,
+            content={
+                "success": False,
+                "message": result,
+                "data": None,
+                "error": None,
+            },
+        )
+
+    return PasswordChangeRead(message=result.message)

@@ -20,6 +20,8 @@ from fastapi_boilerplate.apps.base.model import (
 )
 from fastapi_boilerplate.database.connection import Base
 
+from .constant import PASSWORD, PASSWORD_CHANGE_SUCCESS
+
 
 class UserBase(SQLModel):
     """User Base Model.
@@ -155,7 +157,7 @@ class User(Base, UserBase, table=True):
     password: str = Field(
         min_length=8,
         max_length=255,
-        schema_extra={"examples": ["12345@Aa"]},
+        schema_extra={"examples": [PASSWORD]},
     )
 
 
@@ -185,7 +187,7 @@ class UserCreate(UserBase):
     password: str = Field(
         min_length=8,
         max_length=255,
-        schema_extra={"examples": ["12345@Aa"]},
+        schema_extra={"examples": [PASSWORD]},
     )
 
 
@@ -384,3 +386,58 @@ class UserBulkPatch(BaseBulkUpdate, UserPatch):
     - `error` (str | None): Error message if any.
 
     """
+
+
+class PasswordChange(SQLModel):
+    """Password Change Model.
+
+    :Description:
+    - This class contains model for changing user password.
+
+    :Attributes:
+    - `old_password` (str): Current password of user.
+    - `new_password` (str): New password for user.
+
+    """
+
+    old_password: str = Field(
+        min_length=8,
+        max_length=255,
+        schema_extra={"examples": [PASSWORD]},
+    )
+    new_password: str = Field(
+        min_length=8,
+        max_length=255,
+        schema_extra={"examples": [PASSWORD]},
+    )
+
+    # Settings Configuration
+    model_config = SQLModelConfig(
+        str_strip_whitespace=True,  # type: ignore[unused-ignore]
+    )
+
+
+class PasswordChangeRead(BaseRead[UserResponse]):
+    """Password Change Read Model.
+
+    :Description:
+    - This class contains model for reading password change response.
+
+    :Attributes:
+    - `success` (bool): Success status.
+    - `message` (str): Message for response.
+    - `data` (None): No data returned.
+    - `error` (str | None): Error message if any.
+
+    """
+
+    message: str = Field(
+        default=PASSWORD_CHANGE_SUCCESS,
+        schema_extra={"examples": [PASSWORD_CHANGE_SUCCESS]},
+    )
+    data: None = Field(default=None)  # type: ignore[unused-ignore]
+
+    # Settings Configuration
+    model_config = SQLModelConfig(
+        str_strip_whitespace=True,  # type: ignore[unused-ignore]
+    )
