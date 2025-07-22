@@ -9,7 +9,7 @@ Description:
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Request, status
+from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.docs import get_redoc_html, get_swagger_ui_html
@@ -73,9 +73,9 @@ app.middleware(middleware_type="http")(exception_handling)
 
 
 # Custom Exception Handler for RequestValidationError
-@app.exception_handler(RequestValidationError)
+@app.exception_handler(exc_class_or_status_code=RequestValidationError)
 async def validation_exception_handler(
-    _: Request, exc: RequestValidationError
+    _: Request, err: RequestValidationError
 ) -> ORJSONResponse:
     """Handle FastAPI request validation errors."""
     return ORJSONResponse(
@@ -90,8 +90,25 @@ async def validation_exception_handler(
                     "message": error.get("msg", "Invalid input"),
                     "input": error.get("input", None),
                 }
-                for error in exc.errors()
+                for error in err.errors()
             ],
+        },
+    )
+
+
+# Custom Exception Handler for HTTPException
+@app.exception_handler(exc_class_or_status_code=HTTPException)
+async def http_exception_handler(
+    _: Request, err: HTTPException
+) -> ORJSONResponse:
+    """Handle FastAPI HTTP exceptions."""
+    return ORJSONResponse(
+        status_code=err.status_code,
+        content={
+            "success": False,
+            "message": err.detail,
+            "data": None,
+            "error": str(err),
         },
     )
 
@@ -183,4 +200,4 @@ async def custom_redoc_ui_html() -> HTMLResponse:
 
 
 # Add all file routes to app
-app.include_router(router)
+app.include_router(router=router)

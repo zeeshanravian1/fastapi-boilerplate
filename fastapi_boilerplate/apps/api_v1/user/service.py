@@ -37,6 +37,7 @@ class UserService(BaseService[User, UserCreate, UserUpdate]):
     def __init__(self) -> None:
         """Initialize UserService with UserRepository."""
         super().__init__(repository=UserRepository(model=User))
+        self.user_repository = UserRepository(model=User)
 
     def create(self, db_session: DBSession, record: UserCreate) -> User:
         """Create a new user.
@@ -56,7 +57,9 @@ class UserService(BaseService[User, UserCreate, UserUpdate]):
         # Hash password before saving
         record.password = get_password_hash(password=record.password)
 
-        return super().create(db_session=db_session, record=record)
+        return self.user_repository.create(
+            db_session=db_session, record=record
+        )
 
     def bulk_create(
         self, db_session: DBSession, records: list[UserCreate]
@@ -79,7 +82,9 @@ class UserService(BaseService[User, UserCreate, UserUpdate]):
         for record in records:
             record.password = get_password_hash(password=record.password)
 
-        return super().bulk_create(db_session=db_session, records=records)
+        return self.user_repository.bulk_create(
+            db_session=db_session, records=records
+        )
 
     def password_change(
         self,
@@ -101,7 +106,7 @@ class UserService(BaseService[User, UserCreate, UserUpdate]):
         - `record` (PasswordChangeRead): Password change response.
 
         """
-        user: User | None = super().read_by_id(
+        user: User | None = self.user_repository.read_by_id(
             db_session=db_session, record_id=record_id
         )
 
@@ -118,7 +123,7 @@ class UserService(BaseService[User, UserCreate, UserUpdate]):
         # Update password
         user.password = get_password_hash(password=record.new_password)
 
-        super().update_by_id(
+        self.user_repository.update_by_id(
             db_session=db_session,
             record_id=record_id,
             record=user,  # type: ignore[arg-type]

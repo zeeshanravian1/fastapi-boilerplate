@@ -7,6 +7,7 @@ Description:
 
 import math
 from collections.abc import Sequence
+from datetime import datetime
 from uuid import UUID
 
 from sqlalchemy import ColumnElement
@@ -140,22 +141,22 @@ class BaseRepository[
         self,
         db_session: DBSession,
         field: str,
-        value: int | UUID | float | str | bool,
+        value: int | UUID | float | str | bool | datetime,
     ) -> Model | None:
         """Retrieve a single record by a specific field.
 
         :Args:
         - `db_session` (DBSession): SQLModel database session. **(Required)**
         - `field` (str): Field name to filter by. **(Required)**
-        - `value` (int | UUID | float | str | bool): Value to match for the
-        specified field. **(Required)**
+        - `value` (int | UUID | float | str | bool | datetime): Value to match
+        for specified field. **(Required)**
 
         :Returns:
         - `record` (Model | None): Retrieved record, or None if not found.
 
         """
         query: SelectOfScalar[Model] = select(self._model).where(
-            col(column_expression=getattr(self._model, field)).in_([value])
+            col(column_expression=getattr(self._model, field)) == value
         )
 
         return db_session.exec(statement=query).one_or_none()

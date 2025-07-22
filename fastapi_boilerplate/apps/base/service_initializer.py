@@ -6,7 +6,7 @@ dependencies.
 
 """
 
-from typing import ClassVar, Self, cast
+from typing import ClassVar, cast
 
 
 class ServiceInitializer[T]:
@@ -55,7 +55,7 @@ class ServiceInitializer[T]:
 
         """
         if service_class not in cls._cache:
-            instance: Self = super().__new__(cls)
+            instance: ServiceInitializer[T] = super().__new__(cls)
             cls._cache[service_class] = instance
 
         return cast("ServiceInitializer[T]", cls._cache[service_class])

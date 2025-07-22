@@ -1,7 +1,7 @@
 """User Model.
 
 Description:
-- This module contains user model and schemas.
+- This module contains user models.
 
 """
 
@@ -162,6 +162,10 @@ class User(Base, UserBase, table=True):
         min_length=8,
         max_length=255,
         schema_extra={"examples": [PASSWORD]},
+    )
+    is_active: bool = Field(  # type: ignore[unused-ignore]
+        default=True,
+        schema_extra={"examples": [True]},
     )
 
 

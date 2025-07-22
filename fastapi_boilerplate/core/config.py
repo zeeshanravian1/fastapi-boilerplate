@@ -16,6 +16,7 @@ from pydantic import (
     EmailStr,
     HttpUrl,
     PostgresDsn,
+    SecretStr,
     computed_field,
     model_validator,
 )
@@ -116,15 +117,23 @@ class Settings(BaseSettings):
 
     # SMTP Configuration
 
+    SMTP_HOST: str
+    SMTP_PORT: int = 587
+    SMTP_EMAIL: EmailStr
+    SMTP_USER: str | None = None
+    SMTP_PASSWORD: SecretStr
     SMTP_TLS: bool = True
     SMTP_SSL: bool = False
-    SMTP_PORT: int = 587
-    SMTP_HOST: str | None = None
-    SMTP_USER: str | None = None
-    SMTP_PASSWORD: str | None = None
-    EMAILS_FROM_EMAIL: EmailStr | None = None
     EMAILS_FROM_NAME: EmailStr | None = None
-    EMAIL_RESET_TOKEN_EXPIRE_HOURS: int = 48
+    EMAIL_RESET_TOKEN_EXPIRE_MINUTES: int = 5
+
+    @model_validator(mode="after")
+    def _set_default_smtp_user(self) -> Self:
+        if not self.SMTP_USER:
+            # pylint: disable=invalid-name
+            self.SMTP_USER = self.SMTP_EMAIL
+
+        return self
 
     @model_validator(mode="after")
     def _set_default_emails_from(self) -> Self:
@@ -143,7 +152,7 @@ class Settings(BaseSettings):
         - This property is used to check if emails are enabled
 
         """
-        return bool(self.SMTP_HOST and self.EMAILS_FROM_EMAIL)
+        return bool(self.SMTP_HOST and self.SMTP_EMAIL)
 
     # Super Admin Configuration
 

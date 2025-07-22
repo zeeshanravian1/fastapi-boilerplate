@@ -121,7 +121,7 @@ class AuthenticationService(BaseService[User, UserCreate, UserUpdate]):
             algorithms=[settings.ALGORITHM],
         )
 
-        user: User | None = super().read_by_id(
+        user: User | None = self.auth_repository.read_by_id(
             db_session=db_session,
             record_id=data["id"],  # type: ignore[arg-type]
         )

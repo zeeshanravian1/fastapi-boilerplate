@@ -1,7 +1,7 @@
 """Role Model.
 
 Description:
-- This module contains role model and schemas.
+- This module contains role models.
 
 """
 

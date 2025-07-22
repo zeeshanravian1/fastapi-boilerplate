@@ -57,7 +57,7 @@ async def exception_handling(
                 "success": False,
                 "message": TOKEN_EXPIRED,
                 "data": None,
-                "error": TOKEN_EXPIRED,
+                "error": None,
             },
         )
 
@@ -68,7 +68,7 @@ async def exception_handling(
                 "success": False,
                 "message": INVALID_TOKEN,
                 "data": None,
-                "error": INVALID_TOKEN,
+                "error": None,
             },
         )
 
