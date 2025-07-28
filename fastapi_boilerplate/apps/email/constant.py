@@ -20,11 +20,28 @@ EMAIL_ALREADY_VERIFIED: str = "Email already verified"
 EMAIL_SENT_SUCCESS: str = "Email sent successfully"
 EMAIL_VERIFIED_SUCCESS: str = "Email verified successfully"
 
+CONTACT_NO_VERIFY_SUBJECT: str = f"Welcome to {settings.PROJECT_TITLE}"
+CONTACT_NO_VERIFY_PURPOSE: str = "Verify Contact Number"
+CONTACT_NO_VERIFY_BODY: str = f"""
+Hi,
+Please use the following OTP to verify your contact number:
+
+{{otp_code}}
+
+Thanks,
+The {settings.PROJECT_TITLE} Team
+"""
+
+CONTACT_NO_VERIFIED: str = "Contact number already verified"
+CONTACT_NO_SENT_SUCCESS: str = "OTP sent successfully"
+CONTACT_NO_VERIFIED_SUCCESS: str = "Contact number verified successfully"
+
 PASSWORD_RESET_SUBJECT: str = "Reset Password Request"
 PASSWORD_RESET_PURPOSE: str = "Reset Password"
 PASSWORD_CHANGE_SUCCESS: str = "Password changed successfully"
 
 INVALID_OTP: str = "Invalid OTP code, please request a new one"
+EXPIRED_OTP: str = "OTP expired"
 
 
 class OTPType(str, Enum):

@@ -11,11 +11,14 @@ from uuid import UUID
 
 from jwt import encode
 from pydantic import AnyUrl
+from pydantic_extra_types.phone_numbers import PhoneNumber
 
 from fastapi_boilerplate.core.config import settings
 
+from .constant import CONTACT_NO_VERIFY_BODY, CONTACT_NO_VERIFY_SUBJECT
 from .model import EmailBase, EmailData, SendEmail
 from .send_email import send_email
+from .send_sms import send_sms
 
 
 def generate_otp_code() -> str:
@@ -98,3 +101,37 @@ async def send_email_otp(user_id: UUID | int, record: EmailBase) -> str:
     )
 
     return otp_code
+
+
+def send_sms_otp(contact_no: PhoneNumber) -> tuple[str, datetime]:
+    """Sends an SMS with OTP.
+
+    :Description:
+    - This method is used to send an SMS with OTP to user.
+
+    :Args:
+    - `contact_no` (PhoneNumber): Phone number to which the SMS will be sent.
+    **(Required)**
+    Contact number details to be sent with following fields:
+    - `subject` (str): Subject of SMS. **(Required)**
+    - `user_name` (str): Full name of user. **(Required)**
+
+    :Returns:
+    - `otp_code` (str): OTP code sent to user.
+    - `otp_expiry` (datetime): Expiry time of OTP code.
+
+    """
+    # Generate OTP Code
+    otp_code: str = generate_otp_code()
+    otp_expiry_time: datetime = datetime.now(tz=UTC) + timedelta(
+        minutes=settings.SMS_RESET_TOKEN_EXPIRE_MINUTES
+    )
+
+    send_sms(
+        contact_no=contact_no,
+        body=CONTACT_NO_VERIFY_SUBJECT
+        + "\n"
+        + CONTACT_NO_VERIFY_BODY.format(otp_code=otp_code),
+    )
+
+    return otp_code, otp_expiry_time

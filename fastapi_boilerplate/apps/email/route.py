@@ -18,14 +18,24 @@ from fastapi_boilerplate.apps.api_v1.user.constant import (
 from fastapi_boilerplate.apps.base.service_initializer import (
     ServiceInitializer,
 )
+from fastapi_boilerplate.core.security import CurrentUser
 from fastapi_boilerplate.database.session import DBSession
 
 from .constant import (
+    CONTACT_NO_SENT_SUCCESS,
+    CONTACT_NO_VERIFIED,
+    CONTACT_NO_VERIFIED_SUCCESS,
+    CONTACT_NO_VERIFY_PURPOSE,
     EMAIL_ALREADY_VERIFIED,
     EMAIL_SENT_SUCCESS,
     EMAIL_VERIFY_PURPOSE,
+    EXPIRED_OTP,
 )
 from .model import (
+    ContactNoVerify,
+    ContactNoVerifyRead,
+    ContactNoVerifyRequest,
+    ContactNoVerifyRequestRead,
     EmailVerify,
     EmailVerifyRead,
     EmailVerifyRequest,
@@ -132,3 +142,134 @@ async def verify_email(
 
     """
     return otp_service.verify_email(db_session=db_session, record=record)
+
+
+@router.post(
+    path="/verify-contact-no-request/",
+    status_code=status.HTTP_200_OK,
+    summary="Request Verify Contact Number",
+    response_description=CONTACT_NO_SENT_SUCCESS,
+)
+async def verify_contact_no_request(
+    db_session: DBSession,
+    otp_service: Annotated[
+        OTPService,
+        Depends(dependency=ServiceInitializer(service_class=OTPService)),
+    ],
+    record: ContactNoVerifyRequest,
+    current_user: CurrentUser,
+    background_tasks: BackgroundTasks,
+) -> ContactNoVerifyRequestRead:
+    """Contact Number Verify Request.
+
+    :Description:
+    - This route is used to request contact number verification.
+
+    :Args:
+    - `contact_no` (PhoneNumber): Contact number of user to be verified.
+    **(Required)**
+
+    :Returns:
+    - `message` (str): Contact number sent successfully.
+
+    """
+    result: str | None = await otp_service.verify_contact_no_request(
+        db_session=db_session,
+        record=record,
+        current_user=current_user,
+        background_tasks=background_tasks,
+    )
+
+    if isinstance(result, str):
+        if result == USER_NOT_FOUND:
+            return ORJSONResponse(  # type: ignore[return-value]
+                status_code=status.HTTP_404_NOT_FOUND,
+                content={
+                    "success": False,
+                    "message": USER_NOT_FOUND,
+                    "data": None,
+                    "error": None,
+                },
+            )
+
+        if result == INACTIVE_USER:
+            return ORJSONResponse(  # type: ignore[return-value]
+                status_code=status.HTTP_403_FORBIDDEN,
+                content={
+                    "success": False,
+                    "message": INACTIVE_USER,
+                    "data": None,
+                    "error": None,
+                },
+            )
+
+        if result == CONTACT_NO_VERIFIED:
+            return ORJSONResponse(  # type: ignore[return-value]
+                status_code=status.HTTP_400_BAD_REQUEST,
+                content={
+                    "success": False,
+                    "message": CONTACT_NO_VERIFIED,
+                    "data": None,
+                    "error": None,
+                },
+            )
+
+    return ContactNoVerifyRequestRead(message=CONTACT_NO_SENT_SUCCESS)
+
+
+@router.post(
+    path="/verify-contact-no/",
+    status_code=status.HTTP_200_OK,
+    summary=CONTACT_NO_VERIFY_PURPOSE,
+    response_description=CONTACT_NO_VERIFIED_SUCCESS,
+)
+async def verify_contact_no(
+    db_session: DBSession,
+    otp_service: Annotated[
+        OTPService,
+        Depends(dependency=ServiceInitializer(service_class=OTPService)),
+    ],
+    record: ContactNoVerify,
+    current_user: CurrentUser,
+) -> ContactNoVerifyRead:
+    """Contact Number Verify.
+
+    :Description:
+    - This route is used to verify contact number.
+
+    :Args:
+    - `contact_no` (PhoneNumber): Contact number of user to be verified.
+    **(Required)**
+    - `otp` (str): OTP to verify contact number. **(Required)**
+
+    :Returns:
+    - `message` (str): Contact number verified successfully.
+
+    """
+    result: ContactNoVerifyRead = otp_service.verify_contact_no(
+        db_session=db_session, record=record, current_user=current_user
+    )
+
+    if isinstance(result, str):
+        if result == EXPIRED_OTP:
+            return ORJSONResponse(  # type: ignore[return-value, unused-ignore]
+                status_code=status.HTTP_400_BAD_REQUEST,
+                content={
+                    "success": False,
+                    "message": EXPIRED_OTP,
+                    "data": None,
+                    "error": None,
+                },
+            )
+
+        return ORJSONResponse(  # type: ignore[return-value, unused-ignore]
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content={
+                "success": False,
+                "message": result,
+                "data": None,
+                "error": None,
+            },
+        )
+
+    return result

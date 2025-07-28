@@ -13,7 +13,7 @@ from .constant import EMAIL_TEMPLATE_FILE, EMAIL_TEMPLATE_FOLDER
 from .model import SendEmail
 
 # Email Configuration
-email_config = ConnectionConfig(
+email_config: ConnectionConfig = ConnectionConfig(
     MAIL_SERVER=settings.SMTP_HOST,
     MAIL_PORT=settings.SMTP_PORT,
     MAIL_USERNAME=settings.SMTP_USER,  # type: ignore[arg-type]

@@ -34,7 +34,6 @@ class Base(SQLModel):
     id: int = Field(primary_key=True)
     # id: UUID = Field(default_factory=uuid4, primary_key=True)
     created_at: datetime = Field(
-        default=None,
         sa_type=DateTime(timezone=True),  # type: ignore[call-overload]
         sa_column_kwargs={"server_default": now()},
     )

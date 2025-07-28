@@ -159,6 +159,7 @@ class Settings(BaseSettings):
     TWILIO_ACCOUNT_SID: str
     TWILIO_AUTH_TOKEN: str
     TWILIO_PHONE_NUMBER: str
+    SMS_RESET_TOKEN_EXPIRE_MINUTES: int = 5
 
     # Super Admin Configuration
 
