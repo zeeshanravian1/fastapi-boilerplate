@@ -6,6 +6,7 @@ Description:
 """
 
 from collections.abc import Sequence
+from datetime import datetime
 from uuid import UUID
 
 from sqlmodel import SQLModel
@@ -132,15 +133,15 @@ class BaseService[
         self,
         db_session: DBSession,
         field: str,
-        value: int | UUID | float | str | bool,
+        value: int | UUID | float | str | bool | datetime,
     ) -> Model | None:
         """Retrieve a single record by a specific field.
 
         :Args:
         - `db_session` (DBSession): SQLModel database session. **(Required)**
         - `field` (str): Field name to filter by. **(Required)**
-        - `value` (int | UUID | float | str | bool): Value to match for the
-        specified field. **(Required)**
+        - `value` (int | UUID | float | str | bool | datetime): Value to match
+        for the specified field. **(Required)**
 
         :Returns:
         - `record` (Model | None): Retrieved record, or None if not found.
@@ -148,6 +149,26 @@ class BaseService[
         """
         return self.repository.read_by_field(
             db_session=db_session, field=field, value=value
+        )
+
+    def read_by_multiple_fields(
+        self,
+        db_session: DBSession,
+        fields: list[tuple[str, int | UUID | float | str | bool | datetime]],
+    ) -> Model | None:
+        """Retrieve a single record by multiple fields.
+
+        :Args:
+        - `db_session` (DBSession): SQLModel database session. **(Required)**
+        - `fields` (list[tuple[str, int | UUID | float | str | bool | datetime]
+        ]): List of field-value pairs to filter by. **(Required)**
+
+        :Returns:
+        - `record` (Model | None): Retrieved record, or None if not found.
+
+        """
+        return self.repository.read_by_multiple_fields(
+            db_session=db_session, fields=fields
         )
 
     def read_all(

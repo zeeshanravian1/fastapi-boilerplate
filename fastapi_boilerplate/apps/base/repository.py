@@ -161,6 +161,31 @@ class BaseRepository[
 
         return db_session.exec(statement=query).one_or_none()
 
+    def read_by_multiple_fields(
+        self,
+        db_session: DBSession,
+        fields: list[tuple[str, int | UUID | float | str | bool | datetime]],
+    ) -> Model | None:
+        """Retrieve a single record by multiple fields.
+
+        :Args:
+        - `db_session` (DBSession): SQLModel database session. **(Required)**
+        - `fields` (list[tuple[str, int | UUID | float | str | bool | datetime]
+        ]): List of field-value pairs to filter by. **(Required)**
+
+        :Returns:
+        - `record` (Model | None): Retrieved record, or None if not found.
+
+        """
+        query: SelectOfScalar[Model] = select(self._model).where(
+            *[
+                col(column_expression=getattr(self._model, field)) == value
+                for field, value in fields
+            ]
+        )
+
+        return db_session.exec(statement=query).one_or_none()
+
     def read_all(
         self,
         db_session: DBSession,

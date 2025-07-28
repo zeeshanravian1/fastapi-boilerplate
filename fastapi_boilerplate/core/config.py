@@ -154,6 +154,12 @@ class Settings(BaseSettings):
         """
         return bool(self.SMTP_HOST and self.SMTP_EMAIL)
 
+    # Twilio Configuration
+
+    TWILIO_ACCOUNT_SID: str
+    TWILIO_AUTH_TOKEN: str
+    TWILIO_PHONE_NUMBER: str
+
     # Super Admin Configuration
 
     SUPERUSER_NAME: str

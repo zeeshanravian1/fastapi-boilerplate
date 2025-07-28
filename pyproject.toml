@@ -18,6 +18,8 @@ dependencies = [
     "psycopg[binary,pool]>=3.2.9",
     "pyjwt>=2.10.1",
     "sqlmodel>=0.0.24",
+    "twilio>=9.7.0",
+    "twilio-stubs>=0.2.0",
     "types-passlib>=1.7.7.20250602",
     "types-pyjwt>=1.7.1",
 ]
@@ -25,7 +27,7 @@ dependencies = [
 [dependency-groups]
 dev = [
     "bandit>=1.8.6",
-    "coverage>=7.9.2",
+    "coverage>=7.10.1",
     "httpie>=3.2.4",
     "ipykernel>=6.30.0",
     "jupyter>=1.1.1",
@@ -37,7 +39,7 @@ dev = [
     "python-lsp-server[all]>=1.13.0",
     "pyupgrade>=3.20.0",
     "radon>=6.0.1",
-    "ruff>=0.12.4",
+    "ruff>=0.12.5",
     "skjold>=0.6.2",
 ]
 

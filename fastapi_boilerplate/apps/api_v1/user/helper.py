@@ -8,6 +8,7 @@ Description:
 import re
 
 from passlib.context import CryptContext
+from pydantic_extra_types.phone_numbers import PhoneNumber
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -47,14 +48,14 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     )
 
 
-def validate_contact(contact: str) -> str:
+def validate_contact(contact: PhoneNumber) -> str:
     """Validate Contact Number.
 
     :Description:
     - This method is used to validate contact number data.
 
     :Args:
-    - `contact` (str): Contact number to validate. **(Required)**
+    - `contact` (PhoneNumber): Contact number to validate. **(Required)**
 
     :Returns:
     - `contact` (str): Validated contact number.

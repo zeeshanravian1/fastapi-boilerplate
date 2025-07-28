@@ -64,8 +64,6 @@ class UserBase(SQLModel):
     )
     contact_no: PhoneNumber | None = Field(
         default=None,
-        min_length=1,
-        max_length=20,
         schema_extra={"examples": ["+1 417-555-1234"]},
     )
     username: str = Field(
