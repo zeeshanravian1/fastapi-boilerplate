@@ -22,4 +22,4 @@ class RoleService(BaseService[Role, RoleCreate, RoleUpdate]):
     def __init__(self) -> None:
         """Initialize RoleService with RoleRepository."""
         super().__init__(repository=RoleRepository(model=Role))
-        self.role_repository = RoleRepository(model=Role)
+        self.role_repository: RoleRepository = RoleRepository(model=Role)

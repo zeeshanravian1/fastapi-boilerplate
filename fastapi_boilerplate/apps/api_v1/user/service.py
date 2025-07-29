@@ -37,7 +37,7 @@ class UserService(BaseService[User, UserCreate, UserUpdate]):
     def __init__(self) -> None:
         """Initialize UserService with UserRepository."""
         super().__init__(repository=UserRepository(model=User))
-        self.user_repository = UserRepository(model=User)
+        self.user_repository: UserRepository = UserRepository(model=User)
 
     def create(self, db_session: DBSession, record: UserCreate) -> User:
         """Create a new user.

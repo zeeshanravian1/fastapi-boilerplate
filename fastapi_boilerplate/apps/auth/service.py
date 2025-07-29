@@ -41,7 +41,9 @@ class AuthenticationService(BaseService[User, UserCreate, UserUpdate]):
     def __init__(self) -> None:
         """Initialize AuthenticationService with AuthenticationRepository."""
         super().__init__(repository=AuthenticationRepository(model=User))
-        self.auth_repository = AuthenticationRepository(model=User)
+        self.auth_repository: AuthenticationRepository = (
+            AuthenticationRepository(model=User)
+        )
 
     def login(
         self,

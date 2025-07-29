@@ -30,6 +30,8 @@ from .constant import (
     EMAIL_SENT_SUCCESS,
     EMAIL_VERIFY_PURPOSE,
     EXPIRED_OTP,
+    PASSWORD_CHANGE_SUCCESS,
+    PASSWORD_RESET_PURPOSE,
 )
 from .model import (
     ContactNoVerify,
@@ -40,6 +42,10 @@ from .model import (
     EmailVerifyRead,
     EmailVerifyRequest,
     EmailVerifyRequestRead,
+    PasswordReset,
+    PasswordResetRead,
+    PasswordResetRequest,
+    PasswordResetRequestRead,
 )
 from .service import OTPService
 
@@ -273,3 +279,91 @@ async def verify_contact_no(
         )
 
     return result
+
+
+@router.post(
+    path="/reset-password-request/",
+    status_code=status.HTTP_200_OK,
+    summary="Request Reset Password",
+    response_description="Password reset email sent successfully.",
+)
+async def reset_password_request(
+    db_session: DBSession,
+    otp_service: Annotated[
+        OTPService,
+        Depends(dependency=ServiceInitializer(service_class=OTPService)),
+    ],
+    record: PasswordResetRequest,
+    background_tasks: BackgroundTasks,
+) -> PasswordResetRequestRead:
+    """Password Reset Request.
+
+    :Description:
+    - This route is used to request password reset.
+
+    :Args:
+    - `email` (str): Email of user to reset password. **(Required)**
+
+    :Returns:
+    - `message` (str): Password reset email sent successfully.
+
+    """
+    result: str | None = await otp_service.reset_password_request(
+        db_session=db_session, record=record, background_tasks=background_tasks
+    )
+
+    if isinstance(result, str):
+        if result == USER_NOT_FOUND:
+            return ORJSONResponse(  # type: ignore[return-value]
+                status_code=status.HTTP_404_NOT_FOUND,
+                content={
+                    "success": False,
+                    "message": USER_NOT_FOUND,
+                    "data": None,
+                    "error": None,
+                },
+            )
+
+        if result == INACTIVE_USER:
+            return ORJSONResponse(  # type: ignore[return-value]
+                status_code=status.HTTP_403_FORBIDDEN,
+                content={
+                    "success": False,
+                    "message": INACTIVE_USER,
+                    "data": None,
+                    "error": None,
+                },
+            )
+
+    return PasswordResetRequestRead(message=EMAIL_SENT_SUCCESS)
+
+
+@router.post(
+    path="/reset-password/",
+    status_code=status.HTTP_200_OK,
+    summary=PASSWORD_RESET_PURPOSE,
+    response_description=PASSWORD_CHANGE_SUCCESS,
+)
+async def reset_password(
+    db_session: DBSession,
+    otp_service: Annotated[
+        OTPService,
+        Depends(dependency=ServiceInitializer(service_class=OTPService)),
+    ],
+    record: PasswordReset,
+) -> PasswordResetRead:
+    """Password Reset.
+
+    :Description:
+    - This route is used to reset password.
+
+    :Args:
+    - `email` (str): Email of user to reset password. **(Required)**
+    - `otp` (str): OTP to reset password. **(Required)**
+    - `new_password` (str): New password to set. **(Required)**
+
+    :Returns:
+    - `message` (str): Password changed successfully.
+
+    """
+    return otp_service.reset_password(db_session=db_session, record=record)

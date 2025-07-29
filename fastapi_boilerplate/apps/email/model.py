@@ -523,3 +523,98 @@ class ContactNoVerifyRead(BaseRead[OTP]):
         schema_extra={"examples": [CONTACT_NO_VERIFIED_SUCCESS]},
     )
     data: None = Field(default=None)  # type: ignore[unused-ignore]
+
+
+class PasswordResetRequest(SQLModel):
+    """Password Reset Request Model.
+
+    :Description:
+    - This class contains model for request password reset
+
+    :Attributes:
+    - `email` (EmailStr | None): Email of user.
+
+    """
+
+    email: EmailStr = Field(
+        unique=True, schema_extra={"examples": ["johndoe@example.com"]}
+    )
+
+    # Settings Configuration
+    model_config = SQLModelConfig(
+        str_strip_whitespace=True,  # type: ignore[unused-ignore]
+    )
+
+    # Custom Validators
+    email_validator = field_validator("email")(validate_email)
+
+
+class PasswordResetRequestRead(BaseRead[OTP]):
+    """Password Reset Response Model.
+
+    :Description:
+    - This class contains model for response password reset request
+
+    :Attributes:
+    - `success` (bool): Success status.
+    - `message` (str): Message for response.
+    - `data` (None): No data returned.
+    - `error` (str | None): Error message if any.
+
+    """
+
+    message: str = Field(
+        default=EMAIL_SENT_SUCCESS,
+        schema_extra={"examples": [EMAIL_SENT_SUCCESS]},
+    )
+    data: None = Field(default=None)  # type: ignore[unused-ignore]
+
+
+class PasswordReset(SQLModel):
+    """Password Reset Model.
+
+    :Description:
+    - This class contains model for password reset.
+
+    :Attributes:
+    - `token` (str): Token for password reset.
+    - `new_password` (str): New password for user.
+
+    """
+
+    token: str = Field(
+        min_length=1,
+        max_length=255,
+        schema_extra={"examples": ["token_value"]},
+    )
+    new_password: str = Field(
+        min_length=8,
+        max_length=128,
+        schema_extra={"examples": ["12345@Aa"]},
+    )
+
+    # Settings Configuration
+    model_config = SQLModelConfig(
+        str_strip_whitespace=True,  # type: ignore[unused-ignore]
+    )
+
+
+class PasswordResetRead(BaseRead[LoginResponse]):
+    """Password Reset Response Model.
+
+    :Description:
+    - This class contains model for response password reset
+
+    :Attributes:
+    - `success` (bool): Success status.
+    - `message` (str): Message for response.
+    - `data` (LoginResponse | None): Data containing user login information.
+    - `error` (str | None): Error message if any.
+
+    """
+
+    message: str = Field(
+        default=EMAIL_VERIFIED_SUCCESS,
+        schema_extra={"examples": [EMAIL_VERIFIED_SUCCESS]},
+    )
+    data: LoginResponse | None = Field(default=None)
