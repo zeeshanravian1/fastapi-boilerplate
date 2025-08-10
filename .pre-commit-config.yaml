@@ -1,7 +1,7 @@
 repos:
   # General git checks
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
       # Prevents committing large files that can slow down repository
       # performance, ensuring repo stays lightweight and manageable.
@@ -117,7 +117,7 @@ repos:
   # improving code readability and consistency.
   - repo: https://github.com/astral-sh/ruff-pre-commit
     # Ruff version.
-    rev: v0.12.5
+    rev: v0.12.8
     hooks:
       # Run linter.
       - id: ruff

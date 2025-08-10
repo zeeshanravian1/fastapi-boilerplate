@@ -49,7 +49,7 @@ from .model import (
 )
 from .service import OTPService
 
-router = APIRouter(prefix="/email", tags=["Email"])
+router = APIRouter(prefix="/otp", tags=["OTP"])
 
 
 @router.post(
