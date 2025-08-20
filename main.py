@@ -18,7 +18,7 @@ from fastapi.staticfiles import StaticFiles
 
 from fastapi_boilerplate.apps.route import router
 from fastapi_boilerplate.core.config import settings
-from fastapi_boilerplate.core.helper import custom_generate_unique_id
+from fastapi_boilerplate.core.helper import CoreHelper
 from fastapi_boilerplate.middleware.exception_handling import (
     exception_handling,
 )
@@ -51,7 +51,7 @@ app = FastAPI(
     docs_url=settings.DOCS_URL,
     redoc_url=settings.REDOC_URL,
     lifespan=lifespan,
-    generate_unique_id_function=custom_generate_unique_id,
+    generate_unique_id_function=CoreHelper.custom_generate_unique_id,
 )
 
 
@@ -108,7 +108,7 @@ async def http_exception_handler(
             "success": False,
             "message": err.detail,
             "data": None,
-            "error": str(err),
+            "error": None,
         },
     )
 

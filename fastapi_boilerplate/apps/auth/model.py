@@ -8,6 +8,7 @@ Description:
 from sqlmodel import Field, SQLModel
 from sqlmodel._compat import SQLModelConfig
 
+from fastapi_boilerplate.apps.api_v1.user.model import User
 from fastapi_boilerplate.apps.base.model import BaseRead
 
 from .constant import TOKEN_TYPE, TokenType
@@ -39,6 +40,7 @@ class LoginResponse(SQLModel):
         min_items=1,
         schema_extra={"examples": [TokenType.REFRESH_TOKEN]},
     )
+    user: User
 
     # Settings Configuration
     model_config = SQLModelConfig(

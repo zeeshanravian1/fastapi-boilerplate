@@ -7,7 +7,7 @@ for all tables.
 """
 
 from datetime import datetime
-from uuid import UUID, uuid4  # noqa: F401
+from uuid import UUID, uuid4  # pylint: disable=unused-import  # noqa: F401
 
 from sqlalchemy import Engine
 from sqlalchemy.sql.functions import now

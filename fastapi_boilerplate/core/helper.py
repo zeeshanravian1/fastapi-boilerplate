@@ -8,40 +8,48 @@ Description:
 from fastapi.routing import APIRoute
 
 
-def parse_cors(cors: list[str] | str) -> list[str] | str:
-    """Parse Cors.
+class CoreHelper:
+    """Core Helper Class.
 
     :Description:
-    - This function is used to parse cors values.
-
-    :Args:
-    - `cors` (list[str] | str): Cors value. **(Required)**
-
-    :Returns:
-    - `cors` (list[str] | str): Cors value.
+    - This class contains all helper methods used by core package.
 
     """
-    if isinstance(cors, str) and not cors.startswith("["):
-        return [i.strip() for i in cors.split(",")]
 
-    if isinstance(cors, list | str):
-        return cors
+    @staticmethod
+    def parse_cors(cors: list[str] | str) -> list[str] | str:
+        """Parse Cors.
 
-    raise ValueError(cors)
+        :Description:
+        - This method is used to parse cors values.
 
+        :Args:
+        - `cors` (list[str] | str): Cors value. **(Required)**
 
-# Unique ID Generator for Routes
-def custom_generate_unique_id(route: APIRoute) -> str:
-    """Custom Generate Unique ID.
+        :Returns:
+        - `cors` (list[str] | str): Cors value.
 
-    :Description:
-    - This function is used to return a custom unique id for routes.
+        """
+        if isinstance(cors, str) and not cors.startswith("["):
+            return [i.strip() for i in cors.split(",")]
 
-    :Args:
-    - `route` (APIRoute): Route object. **(Required)**
+        if isinstance(cors, list | str):
+            return cors
 
-    :Returns:
-    - `id` (str): Custom unique id.
+        raise ValueError(cors)
 
-    """
-    return f"{route.tags[0]}-{route.name}"
+    @staticmethod
+    def custom_generate_unique_id(route: APIRoute) -> str:
+        """Custom Generate Unique ID.
+
+        :Description:
+        - This function is used to return a custom unique id for routes.
+
+        :Args:
+        - `route` (APIRoute): Route object. **(Required)**
+
+        :Returns:
+        - `id` (str): Custom unique id.
+
+        """
+        return f"{route.tags[0]}-{route.name}"

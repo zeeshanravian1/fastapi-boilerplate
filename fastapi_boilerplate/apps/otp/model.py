@@ -19,10 +19,7 @@ from fastapi_boilerplate.apps.api_v1.user.constant import (
     NAME,
     PASSWORD,
 )
-from fastapi_boilerplate.apps.api_v1.user.helper import (
-    validate_contact,
-    validate_email,
-)
+from fastapi_boilerplate.apps.api_v1.user.helper import UserHelper
 from fastapi_boilerplate.apps.api_v1.user.model import User
 from fastapi_boilerplate.core.config import settings
 from fastapi_boilerplate.database.connection import Base
@@ -178,7 +175,7 @@ class EmailBase(SQLModel):
     )
 
     # Custom Validators
-    email_validator = field_validator("email")(validate_email)
+    email_validator = field_validator("email")(UserHelper.validate_email)
 
 
 class EmailData(SQLModel):
@@ -278,6 +275,12 @@ class SendSMS(SQLModel):
     body: str = Field(
         schema_extra={"examples": [CONTACT_NO_VERIFY_BODY_TEMPLATE]},
     )
+    user_name: str | None = Field(
+        default=None,
+        min_length=1,
+        max_length=255,
+        schema_extra={"examples": [NAME]},
+    )
 
     # Settings Configuration
     model_config = SQLModelConfig(
@@ -285,7 +288,9 @@ class SendSMS(SQLModel):
     )
 
     # Custom Validators
-    contact_no_validator = field_validator("contact_no")(validate_contact)
+    contact_no_validator = field_validator("contact_no")(
+        UserHelper.validate_contact
+    )
 
 
 class EmailVerifyRequest(SQLModel):
@@ -307,7 +312,7 @@ class EmailVerifyRequest(SQLModel):
     )
 
     # Custom Validators
-    email_validator = field_validator("email")(validate_email)
+    email_validator = field_validator("email")(UserHelper.validate_email)
 
 
 class ContactNoVerifyRequest(SQLModel):
@@ -331,7 +336,9 @@ class ContactNoVerifyRequest(SQLModel):
     )
 
     # Custom Validators
-    contact_no_validator = field_validator("contact_no")(validate_contact)
+    contact_no_validator = field_validator("contact_no")(
+        UserHelper.validate_contact
+    )
 
 
 class PasswordResetRequest(SQLModel):
@@ -353,7 +360,7 @@ class PasswordResetRequest(SQLModel):
     )
 
     # Custom Validators
-    email_validator = field_validator("email")(validate_email)
+    email_validator = field_validator("email")(UserHelper.validate_email)
 
 
 class EmailVerify(SQLModel):

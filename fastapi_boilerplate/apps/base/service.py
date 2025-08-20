@@ -151,7 +151,7 @@ class BaseService[
             db_session=db_session, field=field, value=value
         )
 
-    def read_by_multiple_fields(
+    def read_by_bulk_fields(
         self,
         db_session: DBSession,
         fields: list[tuple[str, int | UUID | float | str | bool | datetime]],
@@ -167,7 +167,7 @@ class BaseService[
         - `record` (Model | None): Retrieved record, or None if not found.
 
         """
-        return self.repository.read_by_multiple_fields(
+        return self.repository.read_by_bulk_fields(
             db_session=db_session, fields=fields
         )
 

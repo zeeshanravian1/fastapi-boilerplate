@@ -13,137 +13,146 @@ from pydantic_extra_types.phone_numbers import PhoneNumber
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
-def get_password_hash(password: str) -> str:
-    """Get Password Hash.
+class UserHelper:
+    """User Helper Class.
 
     :Description:
-    - This function is used to get password hash.
-
-    :Args:
-    - `password` (str): Password. **(Required)**
-
-    :Returns:
-    - `hashed_password` (str): Hashed password.
+    - This class contains helper methods used by user package.
 
     """
-    return str(pwd_context.hash(secret=password))
 
+    @staticmethod
+    def get_password_hash(password: str) -> str:
+        """Get Password Hash.
 
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verify Password.
+        :Description:
+        - This function is used to get password hash.
 
-    :Description:
-    - This function is used to verify password.
+        :Args:
+        - `password` (str): Password. **(Required)**
 
-    :Args:
-    - `plain_password` (str): Plain password. **(Required)**
-    - `hashed_password` (str): Hashed password. **(Required)**
+        :Returns:
+        - `hashed_password` (str): Hashed password.
 
-    :Returns:
-    - `is_verified` (bool): True if password is verified, False otherwise.
+        """
+        return str(pwd_context.hash(secret=password))
 
-    """
-    return bool(
-        pwd_context.verify(secret=plain_password, hash=hashed_password)
-    )
+    @staticmethod
+    def verify_password(plain_password: str, hashed_password: str) -> bool:
+        """Verify Password.
 
+        :Description:
+        - This function is used to verify password.
 
-def validate_contact(contact: PhoneNumber) -> str:
-    """Validate Contact Number.
+        :Args:
+        - `plain_password` (str): Plain password. **(Required)**
+        - `hashed_password` (str): Hashed password. **(Required)**
 
-    :Description:
-    - This method is used to validate contact number data.
+        :Returns:
+        - `is_verified` (bool): True if password is verified, False otherwise.
 
-    :Args:
-    - `contact` (PhoneNumber): Contact number to validate. **(Required)**
-
-    :Returns:
-    - `contact` (str): Validated contact number.
-
-    """
-    return str(contact).replace("tel:", "")
-
-
-def validate_username(username: str) -> str:
-    """Username Validator.
-
-    :Description:
-    - This method is used to validate username data.
-
-    :Args:
-    - `username` (str): Username to validate. **(Required)**
-
-    :Returns:
-    - `username` (str): Validated username with lowered.
-
-    """
-    if not re.search(r"^[a-zA-Z0-9_.-]+$", username):
-        raise ValueError(
-            "Username can only contain alphabets, numbers, "
-            "underscores, hyphens, and periods"
+        """
+        return bool(
+            pwd_context.verify(secret=plain_password, hash=hashed_password)
         )
 
-    return username.lower()
+    @staticmethod
+    def validate_contact(contact: PhoneNumber) -> str:
+        """Validate Contact Number.
 
+        :Description:
+        - This method is used to validate contact number data.
 
-def validate_email(email: str) -> str:
-    """Validate Email.
+        :Args:
+        - `contact` (PhoneNumber): Contact number to validate. **(Required)**
 
-    :Description:
-    - This method is used to validate email.
+        :Returns:
+        - `contact` (str): Validated contact number.
 
-    :Args:
-    - `email` (str): Email to validate. **(Required)**
+        """
+        return str(contact).replace("tel:", "")
 
-    :Returns:
-    - `email` (str): Validated email with lowered.
+    @staticmethod
+    def validate_username(username: str) -> str:
+        """Username Validator.
 
-    """
-    return email.lower()
+        :Description:
+        - This method is used to validate username data.
 
+        :Args:
+        - `username` (str): Username to validate. **(Required)**
 
-def validate_postal_code(postal_code: str) -> str:
-    """Validate Postal Code.
+        :Returns:
+        - `username` (str): Validated username with lowered.
 
-    :Description:
-    - This method is used to validate postal code data.
+        """
+        if not re.search(r"^[a-zA-Z0-9_.-]+$", username):
+            raise ValueError(
+                "Username can only contain alphabets, numbers, "
+                "underscores, hyphens, and periods"
+            )
 
-    :Args:
-    - `postal_code` (str): Postal code to validate. **(Required)**
+        return username.lower()
 
-    :Returns:
-    - `postal_code` (str): Validated postal code.
+    @staticmethod
+    def validate_email(email: str) -> str:
+        """Validate Email.
 
-    """
-    if not re.match(r"^\d{5}(-\d{4})?$", postal_code):
-        raise ValueError(
-            "Postal code must be in format '12345' or '12345-6789'"
-        )
+        :Description:
+        - This method is used to validate email.
 
-    return postal_code
+        :Args:
+        - `email` (str): Email to validate. **(Required)**
 
+        :Returns:
+        - `email` (str): Validated email with lowered.
 
-def validate_password(password: str) -> str:
-    """Validate Password.
+        """
+        return email.lower()
 
-    :Description:
-    - This method is used to validate password data.
+    @staticmethod
+    def validate_postal_code(postal_code: str) -> str:
+        """Validate Postal Code.
 
-    :Args:
-    - `password` (str): Password to validate. **(Required)**
+        :Description:
+        - This method is used to validate postal code data.
 
-    :Returns:
-    - `password` (str): Validated password.
+        :Args:
+        - `postal_code` (str): Postal code to validate. **(Required)**
 
-    """
-    if not re.search(
-        r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#^()_+-/])"
-        r"[A-Za-z\d@$!%*?&#^()_+-/]{8,}$",
-        password,
-    ):
-        raise ValueError(
-            "Password must contain at least one lowercase letter, "
-            "one uppercase letter, one number, and one special character"
-        )
+        :Returns:
+        - `postal_code` (str): Validated postal code.
 
-    return password
+        """
+        if not re.match(r"^\d{5}(-\d{4})?$", postal_code):
+            raise ValueError(
+                "Postal code must be in format '12345' or '12345-6789'"
+            )
+
+        return postal_code
+
+    @staticmethod
+    def validate_password(password: str) -> str:
+        """Validate Password.
+
+        :Description:
+        - This method is used to validate password data.
+
+        :Args:
+        - `password` (str): Password to validate. **(Required)**
+
+        :Returns:
+        - `password` (str): Validated password.
+
+        """
+        if not re.search(
+            r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#^()_+-/])"
+            r"[A-Za-z\d@$!%*?&#^()_+-/]{8,}$",
+            password,
+        ):
+            raise ValueError(
+                "Password must contain at least one lowercase letter, "
+                "one uppercase letter, one number, and one special character"
+            )
+
+        return password

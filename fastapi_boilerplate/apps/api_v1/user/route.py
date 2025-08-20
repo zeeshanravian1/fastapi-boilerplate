@@ -9,11 +9,11 @@ from collections.abc import Sequence
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, status
-from fastapi.responses import ORJSONResponse
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from fastapi_boilerplate.apps.base.model import (
     BasePaginationData,
+    BaseRead,
     PaginationQueryParams,
 )
 from fastapi_boilerplate.apps.base.service_initializer import (
@@ -75,8 +75,7 @@ async def create_user(
     - `state` (str | None): State of user. **(Optional)**
     - `country` (str | None): Country of user. **(Optional)**
     - `postal_code` (str | None): Postal code of user. **(Optional)**
-    - `profile_image_path` (str | None): Path to user's profile image.
-    **(Optional)**
+    - `avatar` (str | None): Path to user's avatar. **(Optional)**
     - `is_active` (bool): Status of user account. **(Optional)**
 
     :Returns:
@@ -92,7 +91,7 @@ async def create_user(
     - `state` (str | None): State of user.
     - `country` (str | None): Country of user.
     - `postal_code` (str | None): Postal code of user.
-    - `profile_image_path` (str | None): Path to user's profile image.
+    - `avatar` (str | None): Path to user's avatar.
     - `is_active` (bool): Status of user account.
 
     """
@@ -136,7 +135,7 @@ async def create_users(
     - `state` (str | None): State of user. **(Optional)**
     - `country` (str | None): Country of user. **(Optional)**
     - `postal_code` (str | None): Postal code of user. **(Optional)**
-    - `profile_image_path` (str | None): Path to user's profile image.
+    - `avatar` (str | None): Path to user's avatar.
     **(Optional)**
     - `is_active` (bool): Status of user account. **(Optional)**
 
@@ -153,7 +152,7 @@ async def create_users(
     - `state` (str | None): State of user.
     - `country` (str | None): Country of user.
     - `postal_code` (str | None): Postal code of user.
-    - `profile_image_path` (str | None): Path to user's profile image.
+    - `avatar` (str | None): Path to user's avatar.
     - `is_active` (bool): Status of user account.
 
     """
@@ -204,7 +203,7 @@ async def read_users_by_ids(
     - `state` (str | None): State of user.
     - `country` (str | None): Country of user.
     - `postal_code` (str | None): Postal code of user.
-    - `profile_image_path` (str | None): Path to user's profile image.
+    - `avatar` (str | None): Path to user's avatar.
     - `is_active` (bool): Status of user account.
 
     """
@@ -255,7 +254,7 @@ async def read_user_by_id(
     - `state` (str | None): State of user.
     - `country` (str | None): Country of user.
     - `postal_code` (str | None): Postal code of user.
-    - `profile_image_path` (str | None): Path to user's profile image.
+    - `avatar` (str | None): Path to user's avatar.
     - `is_active` (bool): Status of user account.
 
     """
@@ -264,14 +263,8 @@ async def read_user_by_id(
     )
 
     if not isinstance(user, User):
-        return ORJSONResponse(  # type: ignore[return-value]
-            status_code=status.HTTP_404_NOT_FOUND,
-            content={
-                "success": False,
-                "message": USER_NOT_FOUND,
-                "data": None,
-                "error": None,
-            },
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=USER_NOT_FOUND
         )
 
     return UserRead(
@@ -313,7 +306,7 @@ async def read_all_users(
     - `state` (str | None): State of user.
     - `country` (str | None): Country of user.
     - `postal_code` (str | None): Postal code of user.
-    - `profile_image_path` (str | None): Path to user's profile image.
+    - `avatar` (str | None): Path to user's avatar.
     - `is_active` (bool): Status of user account.
 
     """
@@ -368,8 +361,7 @@ async def update_users(
     - `state` (str | None): State of user. **(Optional)**
     - `country` (str | None): Country of user. **(Optional)**
     - `postal_code` (str | None): Postal code of user. **(Optional)**
-    - `profile_image_path` (str | None): Path to user's profile image.
-    **(Optional)**
+    - `avatar` (str | None): Path to user's avatar. **(Optional)**
     - `is_active` (bool): Status of user account. **(Optional)**
 
     :Returns:
@@ -385,7 +377,7 @@ async def update_users(
     - `state` (str | None): State of user.
     - `country` (str | None): Country of user.
     - `postal_code` (str | None): Postal code of user.
-    - `profile_image_path` (str | None): Path to user's profile image.
+    - `avatar` (str | None): Path to user's avatar.
     - `is_active` (bool): Status of user account.
 
     """
@@ -434,8 +426,7 @@ async def update_user(
     - `state` (str | None): State of user. **(Optional)**
     - `country` (str | None): Country of user. **(Optional)**
     - `postal_code` (str | None): Postal code of user. **(Optional)**
-    - `profile_image_path` (str | None): Path to user's profile image.
-    **(Optional)**
+    - `avatar` (str | None): Path to user's avatar. **(Optional)**
     - `is_active` (bool): Status of user account. **(Optional)**
 
     :Returns:
@@ -451,7 +442,7 @@ async def update_user(
     - `state` (str | None): State of user.
     - `country` (str | None): Country of user.
     - `postal_code` (str | None): Postal code of user.
-    - `profile_image_path` (str | None): Path to user's profile image.
+    - `avatar` (str | None): Path to user's avatar.
     - `is_active` (bool): Status of user account.
 
     """
@@ -460,14 +451,8 @@ async def update_user(
     )
 
     if not isinstance(updated_user, User):
-        return ORJSONResponse(  # type: ignore[return-value]
-            status_code=status.HTTP_404_NOT_FOUND,
-            content={
-                "success": False,
-                "message": USER_NOT_FOUND,
-                "data": None,
-                "error": None,
-            },
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=USER_NOT_FOUND
         )
 
     return UserRead(
@@ -509,8 +494,7 @@ async def patch_users(
     - `state` (str | None): State of user. **(Optional)**
     - `country` (str | None): Country of user. **(Optional)**
     - `postal_code` (str | None): Postal code of user. **(Optional)**
-    - `profile_image_path` (str | None): Path to user's profile image.
-    **(Optional)**
+    - `avatar` (str | None): Path to user's avatar. **(Optional)**
     - `is_active` (bool): Status of user account. **(Optional)**
 
     :Returns:
@@ -526,7 +510,7 @@ async def patch_users(
     - `state` (str | None): State of user.
     - `country` (str | None): Country of user.
     - `postal_code` (str | None): Postal code of user.
-    - `profile_image_path` (str | None): Path to user's profile image.
+    - `avatar` (str | None): Path to user's avatar.
     - `is_active` (bool): Status of user account.
     - `created_at` (datetime): Datetime of user creation.
     - `updated_at` (datetime): Datetime of user updation.
@@ -577,8 +561,7 @@ async def patch_user(
     - `state` (str | None): State of user. **(Optional)**
     - `country` (str | None): Country of user. **(Optional)**
     - `postal_code` (str | None): Postal code of user. **(Optional)**
-    - `profile_image_path` (str | None): Path to user's profile image.
-    **(Optional)**
+    - `avatar` (str | None): Path to user's avatar. **(Optional)**
     - `is_active` (bool): Status of user account. **(Optional)**
 
     :Returns:
@@ -594,7 +577,7 @@ async def patch_user(
     - `state` (str | None): State of user.
     - `country` (str | None): Country of user.
     - `postal_code` (str | None): Postal code of user.
-    - `profile_image_path` (str | None): Path to user's profile image.
+    - `avatar` (str | None): Path to user's avatar.
     - `is_active` (bool): Status of user account.
     - `created_at` (datetime): Datetime of user creation.
     - `updated_at` (datetime): Datetime of user updation.
@@ -607,14 +590,8 @@ async def patch_user(
     )
 
     if not isinstance(updated_user, User):
-        return ORJSONResponse(  # type: ignore[return-value]
-            status_code=status.HTTP_404_NOT_FOUND,
-            content={
-                "success": False,
-                "message": USER_NOT_FOUND,
-                "data": None,
-                "error": None,
-            },
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=USER_NOT_FOUND
         )
 
     return UserRead(
@@ -685,14 +662,8 @@ async def delete_user(
     )
 
     if not result:
-        return ORJSONResponse(  # type: ignore[return-value]
-            status_code=status.HTTP_404_NOT_FOUND,
-            content={
-                "success": False,
-                "message": USER_NOT_FOUND,
-                "data": None,
-                "error": None,
-            },
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=USER_NOT_FOUND
         )
 
 
@@ -726,24 +697,20 @@ async def password_change(
     - `message` (str): Success message.
 
     """
-    result: PasswordChangeRead | str = user_service.password_change(
+    result: PasswordChangeRead | BaseRead[User] = user_service.password_change(
         db_session=db_session, record_id=current_user.id, record=record
     )
 
-    if isinstance(result, str):
+    if not isinstance(result, PasswordChangeRead):
         status_code: int = (
             status.HTTP_404_NOT_FOUND
-            if result == USER_NOT_FOUND
+            if result.message == USER_NOT_FOUND
             else status.HTTP_400_BAD_REQUEST
         )
-        return ORJSONResponse(  # type: ignore[return-value]
+
+        raise HTTPException(
             status_code=status_code,
-            content={
-                "success": False,
-                "message": result,
-                "data": None,
-                "error": None,
-            },
+            detail=result.message,
         )
 
     return PasswordChangeRead(message=result.message)

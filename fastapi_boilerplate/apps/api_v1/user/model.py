@@ -27,13 +27,7 @@ from .constant import (
     PASSWORD_CHANGE_SUCCESS,
     USERNAME,
 )
-from .helper import (
-    validate_contact,
-    validate_email,
-    validate_password,
-    validate_postal_code,
-    validate_username,
-)
+from .helper import UserHelper
 
 
 class UserBase(SQLModel):
@@ -53,7 +47,7 @@ class UserBase(SQLModel):
     - `state` (str | None): State of user.
     - `country` (str | None): Country of user.
     - `postal_code` (str | None): Postal code of user.
-    - `profile_image_path` (str | None): Path to user's profile image.
+    - `avatar` (str | None): Path to user's avatar.
     - `is_active` (bool): Status of user account.
 
     """
@@ -110,11 +104,11 @@ class UserBase(SQLModel):
         max_length=20,
         schema_extra={"examples": ["62701", "62701-1234"]},
     )
-    profile_image_path: str | None = Field(
+    avatar: str | None = Field(
         default=None,
         min_length=1,
         max_length=255,
-        schema_extra={"examples": ["path/to/profile/image.jpg"]},
+        schema_extra={"examples": ["path/to/avatar.jpg"]},
     )
     is_active: bool | None = Field(
         default=True,
@@ -127,11 +121,15 @@ class UserBase(SQLModel):
     )
 
     # Custom Validators
-    username_validator = field_validator("username")(validate_username)
-    email_validator = field_validator("email")(validate_email)
-    contact_no_validator = field_validator("contact_no")(validate_contact)
+    username_validator = field_validator("username")(
+        UserHelper.validate_username
+    )
+    email_validator = field_validator("email")(UserHelper.validate_email)
+    contact_no_validator = field_validator("contact_no")(
+        UserHelper.validate_contact
+    )
     postal_code_validator = field_validator("postal_code")(
-        validate_postal_code
+        UserHelper.validate_postal_code
     )
 
 
@@ -154,7 +152,7 @@ class User(Base, UserBase, table=True):
     - `state` (str | None): State of user.
     - `country` (str | None): Country of user.
     - `postal_code` (str | None): Postal code of user.
-    - `profile_image_path` (str | None): Path to user's profile image.
+    - `avatar` (str | None): Path to user's avatar.
     - `is_active` (bool): Status of user account.
     - `created_at` (datetime): Timestamp when user was created.
     - `updated_at` (datetime): Timestamp when user was last updated.
@@ -194,7 +192,7 @@ class UserCreate(UserBase):
     - `state` (str | None): State of user.
     - `country` (str | None): Country of user.
     - `postal_code` (str | None): Postal code of user.
-    - `profile_image_path` (str | None): Path to user's profile image.
+    - `avatar` (str | None): Path to user's avatar.
     - `is_active` (bool): Status of user account.
 
     """
@@ -206,7 +204,9 @@ class UserCreate(UserBase):
     )
 
     # Custom Validators
-    password_validator = field_validator("password")(validate_password)
+    password_validator = field_validator("password")(
+        UserHelper.validate_password
+    )
 
 
 class UserResponse(Base, UserBase):
@@ -227,7 +227,7 @@ class UserResponse(Base, UserBase):
     - `state` (str | None): State of user.
     - `country` (str | None): Country of user.
     - `postal_code` (str | None): Postal code of user.
-    - `profile_image_path` (str | None): Path to user's profile image.
+    - `avatar` (str | None): Path to user's avatar.
     - `is_active` (bool): Status of user account.
     - `created_at` (datetime): Timestamp when user was created.
     - `updated_at` (datetime): Timestamp when user was last updated.
@@ -322,7 +322,7 @@ class UserUpdate(UserBase):
     - `state` (str | None): State of user.
     - `country` (str | None): Country of user.
     - `postal_code` (str | None): Postal code of user.
-    - `profile_image_path` (str | None): Path to user's profile image.
+    - `avatar` (str | None): Path to user's avatar.
     - `is_active` (bool): Status of user account.
 
     """
@@ -360,7 +360,7 @@ class UserPatch(UserBase):
     - `state` (str | None): State of user.
     - `country` (str | None): Country of user.
     - `postal_code` (str | None): Postal code of user.
-    - `profile_image_path` (str | None): Path to user's profile image.
+    - `avatar` (str | None): Path to user's avatar.
     - `is_active` (bool | None): Status of user account.
 
     """
@@ -431,8 +431,12 @@ class PasswordChange(SQLModel):
     )
 
     # Custom Validators
-    old_password_validator = field_validator("old_password")(validate_password)
-    new_password_validator = field_validator("new_password")(validate_password)
+    old_password_validator = field_validator("old_password")(
+        UserHelper.validate_password
+    )
+    new_password_validator = field_validator("new_password")(
+        UserHelper.validate_password
+    )
 
 
 class PasswordChangeRead(BaseRead[UserResponse]):
@@ -453,7 +457,6 @@ class PasswordChangeRead(BaseRead[UserResponse]):
         default=PASSWORD_CHANGE_SUCCESS,
         schema_extra={"examples": [PASSWORD_CHANGE_SUCCESS]},
     )
-    data: None = Field(default=None)  # type: ignore[unused-ignore]
 
     # Settings Configuration
     model_config = SQLModelConfig(

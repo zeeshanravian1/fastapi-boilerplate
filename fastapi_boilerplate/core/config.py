@@ -23,7 +23,7 @@ from pydantic import (
 from pydantic_core import MultiHostUrl
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from .helper import parse_cors
+from .helper import CoreHelper
 
 
 class Settings(BaseSettings):
@@ -86,13 +86,13 @@ class Settings(BaseSettings):
     ] = "local"
 
     BACKEND_CORS_ORIGINS: Annotated[
-        list[AnyUrl] | str, BeforeValidator(func=parse_cors)
+        list[AnyUrl] | str, BeforeValidator(func=CoreHelper.parse_cors)
     ] = []
     BACKEND_CORS_METHODS: Annotated[
-        list[str] | str, BeforeValidator(func=parse_cors)
+        list[str] | str, BeforeValidator(func=CoreHelper.parse_cors)
     ] = []
     BACKEND_CORS_HEADERS: Annotated[
-        list[str] | str, BeforeValidator(func=parse_cors)
+        list[str] | str, BeforeValidator(func=CoreHelper.parse_cors)
     ] = []
 
     @computed_field  # type: ignore[prop-decorator]

@@ -14,18 +14,30 @@ from sqlmodel import Session
 from .connection import engine
 
 
-def get_session() -> Generator[Session]:
-    """Get session.
+class SessionManager:
+    """Session manager for database.
 
     :Description:
-    - This function is used to get session.
-
-    :Returns:
-    - `session` (Session): Database session.
+    - This class is used to manage database sessions.
 
     """
-    with Session(bind=engine) as session:
-        yield session
+
+    @staticmethod
+    def get_session() -> Generator[Session]:
+        """Get session.
+
+        :Description:
+        - This function is used to get session.
+
+        :Args:
+        - `None`
+
+        :Yields:
+        - `session` (Session): Database session.
+
+        """
+        with Session(bind=engine) as session:
+            yield session
 
 
-DBSession = Annotated[Session, Depends(dependency=get_session)]
+DBSession = Annotated[Session, Depends(dependency=SessionManager.get_session)]

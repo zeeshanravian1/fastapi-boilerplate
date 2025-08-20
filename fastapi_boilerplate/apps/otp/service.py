@@ -16,7 +16,7 @@ from fastapi_boilerplate.apps.api_v1.user.constant import (
     INACTIVE_USER,
     USER_NOT_FOUND,
 )
-from fastapi_boilerplate.apps.api_v1.user.helper import get_password_hash
+from fastapi_boilerplate.apps.api_v1.user.helper import UserHelper
 from fastapi_boilerplate.apps.api_v1.user.model import User, UserUpdate
 from fastapi_boilerplate.apps.api_v1.user.repository import UserRepository
 from fastapi_boilerplate.apps.auth.constant import TOKEN_TYPE, TokenType
@@ -106,11 +106,9 @@ class OTPService(BaseService[OTP, OTPCreate, OTPUpdate]):
             otp_code, otp_expiry = await self.otp_sender.send_otp(
                 record=SendSMS(
                     contact_no=contact_info,  # type:ignore[unused-ignore]
-                    subject=OTPPurpose.CONTACT_VERIFY.value,
-                    body=CONTACT_NO_VERIFY_BODY_TEMPLATE.format(
-                        user_name=f"{user.first_name} {user.last_name}",
-                        otp_code=otp_code,
-                    ),
+                    subject=WELCOME_SUBJECT,
+                    body=CONTACT_NO_VERIFY_BODY_TEMPLATE,
+                    user_name=f"{user.first_name} {user.last_name}",
                 )
             )
 
@@ -200,7 +198,7 @@ class OTPService(BaseService[OTP, OTPCreate, OTPUpdate]):
             if not isinstance(record, ContactNoVerifyRequest):
                 return BaseRead(message=INVALID_REQUEST_TYPE)
 
-            user = self.user_repository.read_by_multiple_fields(
+            user = self.user_repository.read_by_bulk_fields(
                 db_session=db_session,
                 fields=[
                     (User.id.key, current_user.id),  # type: ignore
@@ -237,7 +235,7 @@ class OTPService(BaseService[OTP, OTPCreate, OTPUpdate]):
             return BaseRead(message=INACTIVE_USER)
 
         # Check for existing OTP record
-        otp_record: OTP | None = self.otp_repository.read_by_multiple_fields(
+        otp_record: OTP | None = self.otp_repository.read_by_bulk_fields(
             db_session=db_session,
             fields=[
                 (OTP.user_id.key, user.id),  # type: ignore[attr-defined]
@@ -263,6 +261,53 @@ class OTPService(BaseService[OTP, OTPCreate, OTPUpdate]):
         )
 
         return BaseRead(message=VERIFICATION_SENT_SUCCESS)
+
+    def _validate_otp_record(
+        self,
+        db_session: DBSession,
+        otp_type: OTPType,
+        user_id: int,
+        otp_to_verify: str,
+    ) -> BaseRead[OTP]:
+        """Validate OTP Record.
+
+        :Description:
+        - This method validates the OTP record for the given user and OTP type.
+
+        :Args:
+        - `db_session` (DBSession): Database session. **(Required)**
+        - `otp_type` (OTPType): Type of OTP being verified. **(Required)**
+        - `user_id` (int): Unique identifier for the user. **(Required)**
+        - `otp_to_verify` (str): OTP code to verify. **(Required)**
+
+        :Returns:
+        - `data` (BaseRead): Data related to OTP validation process.
+
+        """
+        # pylint: disable=no-member
+        otp_record: OTP | None = self.otp_repository.read_by_bulk_fields(
+            db_session=db_session,
+            fields=[
+                (OTP.user_id.key, user_id),  # type: ignore[attr-defined]
+                (OTP.otp_type.key, otp_type),  # type: ignore[attr-defined]
+            ],
+        )
+
+        if not otp_record or otp_record.otp != otp_to_verify:
+            return BaseRead(message=INVALID_OTP)
+
+        if otp_record.is_verified:
+            return BaseRead(message=ALREADY_VERIFIED)
+
+        # Check expiry for SMS
+        if (
+            otp_type == OTPType.SMS
+            and otp_record.otp_expiry
+            and otp_record.otp_expiry < datetime.now(tz=UTC)
+        ):
+            return BaseRead(message=EXPIRED_OTP)
+
+        return BaseRead(data=otp_record)
 
     def verify_otp(
         self,
@@ -304,34 +349,26 @@ class OTPService(BaseService[OTP, OTPCreate, OTPUpdate]):
             user_id = token_data["id"]  # type: ignore[assignment]
             otp_to_verify = token_data["token"]  # type: ignore[assignment]
 
-        # pylint: disable=no-member
-        otp_record: OTP | None = self.otp_repository.read_by_multiple_fields(
+        # Validate and get OTP record
+        result: BaseRead[OTP] = self._validate_otp_record(
             db_session=db_session,
-            fields=[
-                (OTP.user_id.key, user_id),  # type: ignore[attr-defined]
-                (OTP.otp_type.key, otp_type),  # type: ignore[attr-defined]
-            ],
+            otp_type=otp_type,
+            user_id=user_id,
+            otp_to_verify=otp_to_verify,
         )
 
-        if not otp_record or otp_record.otp != otp_to_verify:
-            return BaseRead(message=INVALID_OTP)
+        if not result.data:
+            return BaseRead(message=result.message)
 
-        if otp_record.is_verified:
-            return BaseRead(message=ALREADY_VERIFIED)
+        otp_record: OTP = result.data
 
-        # Check expiry for SMS
-        if (
-            otp_type == OTPType.SMS
-            and otp_record.otp_expiry
-            and otp_record.otp_expiry < datetime.now(tz=UTC)
-        ):
-            return BaseRead(message=EXPIRED_OTP)
-
+        # Update OTP record
         otp_record.is_verified = True
 
         if otp_type == OTPType.SMS:
             otp_record.otp_expiry = None
 
+        # pylint: disable=no-member
         self.otp_repository.update_by_id(
             db_session=db_session,
             record_id=otp_record.id,
@@ -341,7 +378,7 @@ class OTPService(BaseService[OTP, OTPCreate, OTPUpdate]):
         if otp_type == OTPType.SMS:
             return BaseRead(message=VERIFICATION_SUCCESS)
 
-        user: User | None = otp_record.user
+        user: User = otp_record.user
 
         if not user:
             return BaseRead(message=USER_NOT_FOUND)
@@ -354,7 +391,9 @@ class OTPService(BaseService[OTP, OTPCreate, OTPUpdate]):
             if not isinstance(record, PasswordReset):
                 return BaseRead(message=INVALID_OTP)
 
-            user.password = get_password_hash(password=record.new_password)
+            user.password = UserHelper.get_password_hash(
+                password=record.new_password
+            )
 
             self.user_repository.update_by_id(
                 db_session=db_session,
@@ -378,5 +417,6 @@ class OTPService(BaseService[OTP, OTPCreate, OTPUpdate]):
                 refresh_token=create_token(
                     data=data, token_type=TokenType.REFRESH_TOKEN
                 ),
+                user=user,
             ),
         )

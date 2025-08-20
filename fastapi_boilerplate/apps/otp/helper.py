@@ -19,7 +19,12 @@ from .send_sms import send_sms
 
 
 class OTPSender:
-    """OTP Sender class for handling email and SMS OTP operations."""
+    """OTP Sender Class.
+
+    :Description:
+    - This class is responsible for handling email and SMS OTP operations.
+
+    """
 
     def generate_otp_code(self) -> str:
         """Generates 6 digit OTP code.
@@ -102,6 +107,9 @@ class OTPSender:
             )
 
         else:
+            record.body = record.body.format(
+                user_name=record.user_name, otp_code=otp_code
+            )
             send_sms(sms=record)
 
         return otp_code, otp_expiry_time

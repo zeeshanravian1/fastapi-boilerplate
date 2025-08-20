@@ -9,8 +9,7 @@ from collections.abc import Sequence
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, status
-from fastapi.responses import ORJSONResponse
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from fastapi_boilerplate.apps.base.model import (
     BasePaginationData,
@@ -208,14 +207,9 @@ async def read_role_by_id(
     )
 
     if not isinstance(role, Role):
-        return ORJSONResponse(  # type: ignore[return-value]
+        raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            content={
-                "success": False,
-                "message": ROLE_NOT_FOUND,
-                "data": None,
-                "error": None,
-            },
+            detail=ROLE_NOT_FOUND,
         )
 
     return RoleRead(
@@ -357,14 +351,9 @@ async def update_role(
     )
 
     if not isinstance(updated_role, Role):
-        return ORJSONResponse(  # type: ignore[return-value]
+        raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            content={
-                "success": False,
-                "message": ROLE_NOT_FOUND,
-                "data": None,
-                "error": None,
-            },
+            detail=ROLE_NOT_FOUND,
         )
 
     return RoleRead(
@@ -461,14 +450,9 @@ async def patch_role(
     )
 
     if not isinstance(updated_role, Role):
-        return ORJSONResponse(  # type: ignore[return-value]
+        raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            content={
-                "success": False,
-                "message": ROLE_NOT_FOUND,
-                "data": None,
-                "error": None,
-            },
+            detail=ROLE_NOT_FOUND,
         )
 
     return RoleRead(
@@ -539,12 +523,7 @@ async def delete_role(
     )
 
     if not result:
-        return ORJSONResponse(  # type: ignore[return-value]
+        raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            content={
-                "success": False,
-                "message": ROLE_NOT_FOUND,
-                "data": None,
-                "error": None,
-            },
+            detail=ROLE_NOT_FOUND,
         )

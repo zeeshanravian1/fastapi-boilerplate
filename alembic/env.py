@@ -22,7 +22,7 @@ from alembic.context import (
     run_migrations,
 )
 from fastapi_boilerplate.core.config import settings
-from fastapi_boilerplate.core.load_models import load_all_models
+from fastapi_boilerplate.core.load_models import LoadDBModels
 
 # Interpret config file for Python logging.
 # This line sets up loggers basically.
@@ -86,7 +86,7 @@ def do_run_migrations(connection: Connection) -> None:
 
     with begin_transaction():
         # Load all models before running migrations
-        load_all_models()
+        LoadDBModels.load_all_models()
 
         run_migrations()
 

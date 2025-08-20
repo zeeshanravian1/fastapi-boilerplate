@@ -35,5 +35,5 @@ def send_sms(sms: SendSMS) -> None:
     client.messages.create(  # type: ignore[no-untyped-call]
         from_=settings.TWILIO_PHONE_NUMBER,
         to=sms.contact_no,
-        body=sms.subject + "\n" + sms.body,
+        body=sms.subject + "\n\n" + sms.body,
     )

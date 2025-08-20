@@ -7,6 +7,7 @@ Description:
 
 from uuid import UUID
 
+from fastapi_boilerplate.apps.base.model import BaseRead
 from fastapi_boilerplate.apps.base.service import BaseService
 from fastapi_boilerplate.database.session import DBSession
 
@@ -15,7 +16,7 @@ from .constant import (
     PASSWORD_CHANGE_SUCCESS,
     USER_NOT_FOUND,
 )
-from .helper import get_password_hash, verify_password
+from .helper import UserHelper
 from .model import (
     PasswordChange,
     PasswordChangeRead,
@@ -55,7 +56,9 @@ class UserService(BaseService[User, UserCreate, UserUpdate]):
 
         """
         # Hash password before saving
-        record.password = get_password_hash(password=record.password)
+        record.password = UserHelper.get_password_hash(
+            password=record.password
+        )
 
         return self.user_repository.create(
             db_session=db_session, record=record
@@ -80,7 +83,9 @@ class UserService(BaseService[User, UserCreate, UserUpdate]):
         """
         # Hash passwords before saving
         for record in records:
-            record.password = get_password_hash(password=record.password)
+            record.password = UserHelper.get_password_hash(
+                password=record.password
+            )
 
         return self.user_repository.bulk_create(
             db_session=db_session, records=records
@@ -91,7 +96,7 @@ class UserService(BaseService[User, UserCreate, UserUpdate]):
         db_session: DBSession,
         record_id: UUID | int,
         record: PasswordChange,
-    ) -> PasswordChangeRead | str:
+    ) -> PasswordChangeRead | BaseRead[User]:
         """Change User Password.
 
         :Description:
@@ -111,17 +116,19 @@ class UserService(BaseService[User, UserCreate, UserUpdate]):
         )
 
         if not user:
-            return USER_NOT_FOUND
+            return BaseRead(message=USER_NOT_FOUND)
 
         # Verify old password
-        if not verify_password(
+        if not UserHelper.verify_password(
             plain_password=record.old_password,
             hashed_password=user.password,
         ):
-            return INCORRECT_PASSWORD
+            return BaseRead(message=INCORRECT_PASSWORD)
 
         # Update password
-        user.password = get_password_hash(password=record.new_password)
+        user.password = UserHelper.get_password_hash(
+            password=record.new_password
+        )
 
         self.user_repository.update_by_id(
             db_session=db_session,

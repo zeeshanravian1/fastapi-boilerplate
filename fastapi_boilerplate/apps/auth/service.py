@@ -14,12 +14,13 @@ from fastapi_boilerplate.apps.api_v1.user.constant import (
     INACTIVE_USER,
     USER_NOT_FOUND,
 )
-from fastapi_boilerplate.apps.api_v1.user.helper import verify_password
+from fastapi_boilerplate.apps.api_v1.user.helper import UserHelper
 from fastapi_boilerplate.apps.api_v1.user.model import (
     User,
     UserCreate,
     UserUpdate,
 )
+from fastapi_boilerplate.apps.base.model import BaseRead
 from fastapi_boilerplate.apps.base.service import BaseService
 from fastapi_boilerplate.core.config import settings
 from fastapi_boilerplate.core.security import create_token
@@ -49,7 +50,7 @@ class AuthenticationService(BaseService[User, UserCreate, UserUpdate]):
         self,
         db_session: DBSession,
         form_data: OAuth2PasswordRequestForm,
-    ) -> LoginResponse | str:
+    ) -> LoginResponse | BaseRead[User]:
         """Login User.
 
         :Description:
@@ -60,7 +61,7 @@ class AuthenticationService(BaseService[User, UserCreate, UserUpdate]):
         - `form_data` (OAuth2PasswordRequestForm): Form data. **(Required)**
 
         :Returns:
-        - `record` (LoginResponse | str): Login response.
+        - `record` (LoginResponse): Login response.
 
         """
         user: User | None = self.auth_repository.login(
@@ -68,16 +69,16 @@ class AuthenticationService(BaseService[User, UserCreate, UserUpdate]):
         )
 
         if not user:
-            return USER_NOT_FOUND
+            return BaseRead(message=USER_NOT_FOUND)
 
         if not user.is_active:
-            return INACTIVE_USER
+            return BaseRead(message=INACTIVE_USER)
 
-        if not verify_password(
+        if not UserHelper.verify_password(
             plain_password=form_data.password,
             hashed_password=user.password,
         ):
-            return INCORRECT_PASSWORD
+            return BaseRead(message=INCORRECT_PASSWORD)
 
         data: dict[str, int | str] = {
             "id": user.id,
@@ -97,13 +98,14 @@ class AuthenticationService(BaseService[User, UserCreate, UserUpdate]):
             token_type=TOKEN_TYPE,
             access_token=access_token,
             refresh_token=refresh_token,
+            user=user,
         )
 
     def refresh_token(
         self,
         db_session: DBSession,
         token: str,
-    ) -> RefreshTokenResponse | str:
+    ) -> RefreshTokenResponse | BaseRead[User]:
         """Refresh Token.
 
         :Description:
@@ -114,7 +116,7 @@ class AuthenticationService(BaseService[User, UserCreate, UserUpdate]):
         - `token` (str): Token to refresh. **(Required)**
 
         :Returns:
-        - `record` (RefreshTokenResponse | str): Login response with new token.
+        - `record` (RefreshTokenResponse): Login response with new token.
 
         """
         data: dict[str, int | UUID | float | str | bool] = decode(
@@ -129,10 +131,10 @@ class AuthenticationService(BaseService[User, UserCreate, UserUpdate]):
         )
 
         if not user:
-            return USER_NOT_FOUND
+            return BaseRead(message=USER_NOT_FOUND)
 
         if not user.is_active:
-            return INACTIVE_USER
+            return BaseRead(message=INACTIVE_USER)
 
         data = {
             "id": user.id,

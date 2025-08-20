@@ -162,7 +162,7 @@ class BaseRepository[
 
         return db_session.exec(statement=query).one_or_none()
 
-    def read_by_multiple_fields(
+    def read_by_bulk_fields(
         self,
         db_session: DBSession,
         fields: list[

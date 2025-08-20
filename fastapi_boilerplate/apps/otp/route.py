@@ -8,10 +8,12 @@ Description:
 
 from typing import Annotated
 
-from fastapi import APIRouter, BackgroundTasks, Depends, status
-from fastapi.responses import ORJSONResponse
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 
-from fastapi_boilerplate.apps.api_v1.user.constant import USER_NOT_FOUND
+from fastapi_boilerplate.apps.api_v1.user.constant import (
+    INACTIVE_USER,
+    USER_NOT_FOUND,
+)
 from fastapi_boilerplate.apps.auth.model import LoginResponse
 from fastapi_boilerplate.apps.base.model import BaseRead
 from fastapi_boilerplate.apps.base.service_initializer import (
@@ -21,6 +23,7 @@ from fastapi_boilerplate.core.security import CurrentUser
 from fastapi_boilerplate.database.session import DBSession
 
 from .constant import (
+    CONTACT_NO_NOT_FOUND,
     EXPIRED_OTP,
     INVALID_OTP,
     PASSWORD_RESET_SUCCESS,
@@ -76,29 +79,19 @@ async def verify_email_request(
         record=record,
     )
 
-    if result.message == USER_NOT_FOUND:
-        return ORJSONResponse(  # type: ignore[return-value]
-            status_code=status.HTTP_404_NOT_FOUND,
-            content={
-                "success": False,
-                "message": USER_NOT_FOUND,
-                "data": None,
-                "error": None,
-            },
-        )
-
     if result.message != VERIFICATION_SENT_SUCCESS:
-        return ORJSONResponse(  # type: ignore[return-value]
-            status_code=status.HTTP_400_BAD_REQUEST,
-            content={
-                "success": False,
-                "message": result.message,
-                "data": None,
-                "error": None,
-            },
-        )
+        if result.message in (USER_NOT_FOUND, CONTACT_NO_NOT_FOUND):
+            status_code = status.HTTP_404_NOT_FOUND
 
-    return BaseRead(message=VERIFICATION_SENT_SUCCESS)
+        elif result.message == INACTIVE_USER:
+            status_code = status.HTTP_403_FORBIDDEN
+
+        else:
+            status_code = status.HTTP_400_BAD_REQUEST
+
+        raise HTTPException(status_code=status_code, detail=result.message)
+
+    return result
 
 
 @router.post(
@@ -132,40 +125,22 @@ async def verify_email(
         db_session=db_session, otp_type=OTPType.EMAIL, record=record
     )
 
-    if result.message == USER_NOT_FOUND:
-        return ORJSONResponse(  # type: ignore[return-value]
-            status_code=status.HTTP_404_NOT_FOUND,
-            content={
-                "success": False,
-                "message": USER_NOT_FOUND,
-                "data": None,
-                "error": None,
-            },
-        )
-
-    if result.message in (INVALID_OTP, EXPIRED_OTP):
-        return ORJSONResponse(  # type: ignore[return-value]
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            content={
-                "success": False,
-                "message": result.message,
-                "data": None,
-                "error": None,
-            },
-        )
-
     if result.message != VERIFICATION_SUCCESS:
-        return ORJSONResponse(  # type: ignore[return-value]
-            status_code=status.HTTP_400_BAD_REQUEST,
-            content={
-                "success": False,
-                "message": result.message,
-                "data": None,
-                "error": None,
-            },
-        )
+        if result.message == USER_NOT_FOUND:
+            status_code = status.HTTP_404_NOT_FOUND
 
-    return BaseRead(message=VERIFICATION_SUCCESS)
+        elif result.message == INACTIVE_USER:
+            status_code = status.HTTP_403_FORBIDDEN
+
+        elif result.message in (INVALID_OTP, EXPIRED_OTP):
+            status_code = status.HTTP_401_UNAUTHORIZED
+
+        else:
+            status_code = status.HTTP_400_BAD_REQUEST
+
+        raise HTTPException(status_code=status_code, detail=result.message)
+
+    return result
 
 
 @router.post(
@@ -197,13 +172,27 @@ async def verify_contact_no_request(
     - `message` (str): Contact number sent successfully.
 
     """
-    return await otp_service.request_otp(
+    result: BaseRead[OTP] = await otp_service.request_otp(
         db_session=db_session,
         otp_type=OTPType.SMS,
         background_tasks=background_tasks,
         record=record,
         current_user=current_user,
     )
+
+    if result.message != VERIFICATION_SENT_SUCCESS:
+        if result.message in (USER_NOT_FOUND, CONTACT_NO_NOT_FOUND):
+            status_code = status.HTTP_404_NOT_FOUND
+
+        elif result.message == INACTIVE_USER:
+            status_code = status.HTTP_403_FORBIDDEN
+
+        else:
+            status_code = status.HTTP_400_BAD_REQUEST
+
+        raise HTTPException(status_code=status_code, detail=result.message)
+
+    return result
 
 
 @router.post(
@@ -235,12 +224,29 @@ async def verify_contact_no(
     - `message` (str): Contact number verified successfully.
 
     """
-    return otp_service.verify_otp(
+    result: BaseRead[LoginResponse] = otp_service.verify_otp(
         db_session=db_session,
         otp_type=OTPType.SMS,
         record=record,
         current_user=current_user,
     )
+
+    if result.message != VERIFICATION_SUCCESS:
+        if result.message == USER_NOT_FOUND:
+            status_code = status.HTTP_404_NOT_FOUND
+
+        elif result.message == INACTIVE_USER:
+            status_code = status.HTTP_403_FORBIDDEN
+
+        elif result.message in (INVALID_OTP, EXPIRED_OTP):
+            status_code = status.HTTP_401_UNAUTHORIZED
+
+        else:
+            status_code = status.HTTP_400_BAD_REQUEST
+
+        raise HTTPException(status_code=status_code, detail=result.message)
+
+    return result
 
 
 @router.post(
@@ -270,12 +276,26 @@ async def reset_password_request(
     - `message` (str): Password reset email sent successfully.
 
     """
-    return await otp_service.request_otp(
+    result: BaseRead[OTP] = await otp_service.request_otp(
         db_session=db_session,
         otp_type=OTPType.PASSWORD,
         background_tasks=background_tasks,
         record=record,
     )
+
+    if result.message != VERIFICATION_SENT_SUCCESS:
+        if result.message in (USER_NOT_FOUND, CONTACT_NO_NOT_FOUND):
+            status_code = status.HTTP_404_NOT_FOUND
+
+        elif result.message == INACTIVE_USER:
+            status_code = status.HTTP_403_FORBIDDEN
+
+        else:
+            status_code = status.HTTP_400_BAD_REQUEST
+
+        raise HTTPException(status_code=status_code, detail=result.message)
+
+    return result
 
 
 @router.post(
@@ -306,6 +326,23 @@ async def reset_password(
     - `message` (str): Password changed successfully.
 
     """
-    return otp_service.verify_otp(
+    result: BaseRead[LoginResponse] = otp_service.verify_otp(
         db_session=db_session, otp_type=OTPType.PASSWORD, record=record
     )
+
+    if result.message != VERIFICATION_SUCCESS:
+        if result.message == USER_NOT_FOUND:
+            status_code = status.HTTP_404_NOT_FOUND
+
+        elif result.message == INACTIVE_USER:
+            status_code = status.HTTP_403_FORBIDDEN
+
+        elif result.message in (INVALID_OTP, EXPIRED_OTP):
+            status_code = status.HTTP_401_UNAUTHORIZED
+
+        else:
+            status_code = status.HTTP_400_BAD_REQUEST
+
+        raise HTTPException(status_code=status_code, detail=result.message)
+
+    return result

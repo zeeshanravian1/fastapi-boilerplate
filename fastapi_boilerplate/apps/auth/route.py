@@ -8,20 +8,20 @@ Description:
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, status
-from fastapi.responses import ORJSONResponse
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 
 from fastapi_boilerplate.apps.api_v1.user.constant import (
     INACTIVE_USER,
     USER_NOT_FOUND,
 )
+from fastapi_boilerplate.apps.api_v1.user.model import User
+from fastapi_boilerplate.apps.base.model import BaseRead
 from fastapi_boilerplate.apps.base.service_initializer import (
     ServiceInitializer,
 )
 from fastapi_boilerplate.database.session import DBSession
 
-from .constant import INCORRECT_PASSWORD
 from .model import (
     LoginResponse,
     RefreshToken,
@@ -62,48 +62,27 @@ async def login(
     - `token_type` (str): Type of token.
     - `access_token` (str): Access token.
     - `refresh_token` (str): Refresh token.
+    - `user` (User): User information.
 
     """
-    result: LoginResponse | str = auth_service.login(
+    result: LoginResponse | BaseRead[User] = auth_service.login(
         db_session=db_session,
         form_data=form_data,
     )
 
-    if isinstance(result, str):
-        if result == USER_NOT_FOUND:
-            return ORJSONResponse(  # type: ignore[return-value]
-                status_code=status.HTTP_404_NOT_FOUND,
-                content={
-                    "success": False,
-                    "message": USER_NOT_FOUND,
-                    "data": None,
-                    "error": None,
-                },
-            )
+    if not isinstance(result, LoginResponse):
+        if result.message == USER_NOT_FOUND:
+            status_code = status.HTTP_404_NOT_FOUND
 
-        if result == INACTIVE_USER:
-            return ORJSONResponse(  # type: ignore[return-value]
-                status_code=status.HTTP_403_FORBIDDEN,
-                content={
-                    "success": False,
-                    "message": INACTIVE_USER,
-                    "data": None,
-                    "error": None,
-                },
-            )
+        elif result.message == INACTIVE_USER:
+            status_code = status.HTTP_403_FORBIDDEN
 
-        if result == INCORRECT_PASSWORD:
-            return ORJSONResponse(  # type: ignore[return-value]
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                content={
-                    "success": False,
-                    "message": INCORRECT_PASSWORD,
-                    "data": None,
-                    "error": None,
-                },
-            )
+        else:
+            status_code = status.HTTP_400_BAD_REQUEST
 
-    return LoginResponse(**result.model_dump())  # type: ignore[union-attr]
+        raise HTTPException(status_code=status_code, detail=result.message)
+
+    return LoginResponse(**result.model_dump())
 
 
 @router.post(
@@ -136,36 +115,25 @@ async def refresh_token(
     - **access_token** (str): Access token of user.
 
     """
-    result: RefreshTokenResponse | str = auth_service.refresh_token(
+    result: RefreshTokenResponse | BaseRead[User] = auth_service.refresh_token(
         db_session=db_session,
         token=token.refresh_token,
     )
 
-    if isinstance(result, str):
-        if result == USER_NOT_FOUND:
-            return ORJSONResponse(  # type: ignore[return-value]
-                status_code=status.HTTP_404_NOT_FOUND,
-                content={
-                    "success": False,
-                    "message": USER_NOT_FOUND,
-                    "data": None,
-                    "error": None,
-                },
-            )
+    if not isinstance(result, RefreshTokenResponse):
+        if result.message == USER_NOT_FOUND:
+            status_code = status.HTTP_404_NOT_FOUND
 
-        if result == INACTIVE_USER:
-            return ORJSONResponse(  # type: ignore[return-value]
-                status_code=status.HTTP_403_FORBIDDEN,
-                content={
-                    "success": False,
-                    "message": INACTIVE_USER,
-                    "data": None,
-                    "error": None,
-                },
-            )
+        elif result.message == INACTIVE_USER:
+            status_code = status.HTTP_403_FORBIDDEN
+
+        else:
+            status_code = status.HTTP_400_BAD_REQUEST
+
+        raise HTTPException(status_code=status_code, detail=result.message)
 
     return RefreshTokenRead(
         success=True,
         message="Token refreshed successfully",
-        data=RefreshTokenResponse(**result.model_dump()),  # type: ignore
+        data=RefreshTokenResponse(**result.model_dump()),
     )

@@ -18,15 +18,9 @@ from psycopg.errors import (
 )
 from sqlalchemy.exc import IntegrityError
 
-from .constant import (
-    FOREIGN_KEY_VIOLATION,
-    INTEGRITY_ERROR,
-    INTERNAL_SERVER_ERROR,
-    INVALID_TOKEN,
-    NOT_NULL_VIOLATION,
-    TOKEN_EXPIRED,
-    UNIQUE_VIOLATION,
-)
+from fastapi_boilerplate.apps.otp.constant import EXPIRED_OTP, INVALID_OTP
+
+from .constant import INTEGRITY_ERROR, INTERNAL_SERVER_ERROR
 
 exception_logger: logging.Logger = logging.getLogger(__name__)
 
@@ -47,33 +41,25 @@ async def exception_handling(
     - **response** (Response): Response object.
 
     """
+    message: str
+    error: str | None = None
+
     try:
         response: Response = await call_next(request)
+        return response
 
     except ExpiredSignatureError:
-        return ORJSONResponse(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            content={
-                "success": False,
-                "message": TOKEN_EXPIRED,
-                "data": None,
-                "error": None,
-            },
-        )
+        status_code = status.HTTP_401_UNAUTHORIZED
+        message = EXPIRED_OTP
 
     except InvalidSignatureError:
-        return ORJSONResponse(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            content={
-                "success": False,
-                "message": INVALID_TOKEN,
-                "data": None,
-                "error": None,
-            },
-        )
+        status_code = status.HTTP_401_UNAUTHORIZED
+        message = INVALID_OTP
 
     except IntegrityError as err:
-        err_message: str = INTEGRITY_ERROR
+        status_code = status.HTTP_409_CONFLICT
+        message = INTEGRITY_ERROR
+        error = INTEGRITY_ERROR
 
         if isinstance(
             err.orig, UniqueViolation | ForeignKeyViolation | NotNullViolation
@@ -81,7 +67,7 @@ async def exception_handling(
             err_message_detail: str | None = err.orig.diag.message_detail
 
             if err_message_detail is not None:
-                err_message = (
+                error = (
                     err_message_detail.replace("Key", "")
                     .replace("(", "")
                     .replace(")", "")
@@ -90,35 +76,19 @@ async def exception_handling(
                     .strip()
                 )
 
-            elif isinstance(err.orig, UniqueViolation):
-                err_message = UNIQUE_VIOLATION
-
-            elif isinstance(err.orig, ForeignKeyViolation):
-                err_message = FOREIGN_KEY_VIOLATION
-
-            elif isinstance(err.orig, NotNullViolation):
-                err_message = NOT_NULL_VIOLATION
-
-        return ORJSONResponse(
-            status_code=status.HTTP_409_CONFLICT,
-            content={
-                "success": False,
-                "message": INTEGRITY_ERROR,
-                "data": None,
-                "error": err_message,
-            },
-        )
-
     except Exception as err:  # pylint: disable=broad-exception-caught
         exception_logger.exception(msg=err)
-        return ORJSONResponse(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            content={
-                "success": False,
-                "message": INTERNAL_SERVER_ERROR,
-                "data": None,
-                "error": str(err),
-            },
-        )
 
-    return response
+        status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        message = INTERNAL_SERVER_ERROR
+        error = str(err)
+
+    return ORJSONResponse(
+        status_code=status_code,
+        content={
+            "success": False,
+            "message": message,
+            "data": None,
+            "error": error,
+        },
+    )
