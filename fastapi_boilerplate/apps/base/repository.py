@@ -10,6 +10,7 @@ from collections.abc import Sequence
 from datetime import datetime
 from uuid import UUID
 
+from pydantic_extra_types.phone_numbers import PhoneNumber
 from sqlalchemy import ColumnElement
 from sqlalchemy.orm.attributes import InstrumentedAttribute
 from sqlmodel import SQLModel, col, func, select
@@ -164,7 +165,11 @@ class BaseRepository[
     def read_by_multiple_fields(
         self,
         db_session: DBSession,
-        fields: list[tuple[str, int | UUID | float | str | bool | datetime]],
+        fields: list[
+            tuple[
+                str, int | UUID | float | str | bool | datetime | PhoneNumber
+            ]
+        ],
     ) -> Model | None:
         """Retrieve a single record by multiple fields.
 

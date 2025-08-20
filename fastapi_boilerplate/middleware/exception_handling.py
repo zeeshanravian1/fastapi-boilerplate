@@ -80,8 +80,6 @@ async def exception_handling(
         ):
             err_message_detail: str | None = err.orig.diag.message_detail
 
-            print(err_message_detail)
-
             if err_message_detail is not None:
                 err_message = (
                     err_message_detail.replace("Key", "")

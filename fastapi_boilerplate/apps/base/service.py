@@ -141,7 +141,7 @@ class BaseService[
         - `db_session` (DBSession): SQLModel database session. **(Required)**
         - `field` (str): Field name to filter by. **(Required)**
         - `value` (int | UUID | float | str | bool | datetime): Value to match
-        for the specified field. **(Required)**
+        for specified field. **(Required)**
 
         :Returns:
         - `record` (Model | None): Retrieved record, or None if not found.

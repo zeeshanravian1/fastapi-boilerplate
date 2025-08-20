@@ -21,40 +21,39 @@ from fastapi_boilerplate.apps.api_v1.user.model import User, UserUpdate
 from fastapi_boilerplate.apps.api_v1.user.repository import UserRepository
 from fastapi_boilerplate.apps.auth.constant import TOKEN_TYPE, TokenType
 from fastapi_boilerplate.apps.auth.model import LoginResponse
+from fastapi_boilerplate.apps.base.model import BaseRead
 from fastapi_boilerplate.apps.base.service import BaseService
 from fastapi_boilerplate.core.config import settings
 from fastapi_boilerplate.core.security import CurrentUser, create_token
 from fastapi_boilerplate.database.session import DBSession
 
 from .constant import (
-    CONTACT_NO_SENT_SUCCESS,
-    CONTACT_NO_VERIFIED,
-    CONTACT_NO_VERIFIED_SUCCESS,
-    EMAIL_ALREADY_VERIFIED,
-    EMAIL_VERIFY_PURPOSE,
-    EMAIL_VERIFY_SUBJECT,
+    ALREADY_VERIFIED,
+    CONTACT_NO_NOT_FOUND,
+    CONTACT_NO_VERIFY_BODY_TEMPLATE,
     EXPIRED_OTP,
     INVALID_OTP,
-    PASSWORD_CHANGE_SUCCESS,
-    PASSWORD_RESET_PURPOSE,
-    PASSWORD_RESET_SUBJECT,
+    INVALID_REQUEST_TYPE,
+    RESET_PASSWORD_SUBJECT,
+    VERIFICATION_SENT_SUCCESS,
+    VERIFICATION_SUCCESS,
+    WELCOME_SUBJECT,
+    OTPPurpose,
     OTPType,
 )
-from .helper import send_email_otp, send_sms_otp
+from .helper import OTPSender
 from .model import (
     OTP,
     ContactNoVerify,
-    ContactNoVerifyRead,
     ContactNoVerifyRequest,
     EmailBase,
     EmailVerify,
-    EmailVerifyRead,
     EmailVerifyRequest,
     OTPCreate,
     OTPUpdate,
     PasswordReset,
-    PasswordResetRead,
     PasswordResetRequest,
+    SendSMS,
 )
 from .repository import OTPRepository
 
@@ -72,40 +71,78 @@ class OTPService(BaseService[OTP, OTPCreate, OTPUpdate]):
         super().__init__(repository=OTPRepository(model=OTP))
         self.otp_repository: OTPRepository = OTPRepository(model=OTP)
         self.user_repository: UserRepository = UserRepository(model=User)
+        self.otp_sender: OTPSender = OTPSender()
 
-    async def background_email(
+    async def send_otp_background(
         self,
         db_session: DBSession,
         user: User,
         otp_record: OTP | None,
-        email: EmailStr,
+        otp_type: OTPType,
+        contact_info: EmailStr | PhoneNumber,
     ) -> None:
-        """Send Email in Background Task.
+        """Send OTP in Background Task.
 
         :Description:
-        - This method is used to send email in background task.
+        - This method sends OTP via email or SMS in background task.
 
         :Args:
+        - `db_session` (DBSession): Database session. **(Required)**
         - `user` (User): User object containing user details. **(Required)**
-        - `otp_record` (OTP | None): OTP record.
-        - `email` (EmailStr): Email address to send the OTP. **(Required)**
+        - `otp_record` (OTP | None): Existing OTP record if any.
+        - `otp_type` (OTPType): Type of OTP (EMAIL, SMS, PASSWORD).
+        **(Required)**
+        - `contact_info` (EmailStr | PhoneNumber): Email or phone number.
+        **(Required)**
 
         :Returns:
         - `None`
 
         """
-        otp_code: str = await send_email_otp(
-            user_id=user.id,
-            record=EmailBase(
-                subject=EMAIL_VERIFY_SUBJECT,
-                email_purpose=EMAIL_VERIFY_PURPOSE,
-                user_name=f"{user.first_name} {user.last_name}",
-                email=email,
-            ),
-        )
+        otp_code: str
+        otp_expiry: datetime | None
+
+        if otp_type == OTPType.SMS:
+            otp_code, otp_expiry = await self.otp_sender.send_otp(
+                record=SendSMS(
+                    contact_no=contact_info,  # type:ignore[unused-ignore]
+                    subject=OTPPurpose.CONTACT_VERIFY.value,
+                    body=CONTACT_NO_VERIFY_BODY_TEMPLATE.format(
+                        user_name=f"{user.first_name} {user.last_name}",
+                        otp_code=otp_code,
+                    ),
+                )
+            )
+
+        else:
+            email_purpose: str = (
+                OTPPurpose.EMAIL_VERIFY.value
+                if otp_type == OTPType.EMAIL
+                else OTPPurpose.PASSWORD_RESET.value
+            )
+            email_subject: str = (
+                WELCOME_SUBJECT
+                if otp_type == OTPType.EMAIL
+                else RESET_PASSWORD_SUBJECT
+            )
+
+            otp_code, otp_expiry = await self.otp_sender.send_otp(
+                record=EmailBase(
+                    user_id=user.id,
+                    user_name=f"{user.first_name} {user.last_name}",
+                    email=contact_info,
+                    subject=email_subject,
+                    email_purpose=email_purpose,
+                ),
+            )
+
+            otp_expiry = None
 
         if otp_record:
             otp_record.otp = otp_code
+
+            if otp_type == OTPType.SMS:
+                otp_record.otp_expiry = otp_expiry
 
             self.otp_repository.update_by_id(
                 db_session=db_session,
@@ -114,454 +151,186 @@ class OTPService(BaseService[OTP, OTPCreate, OTPUpdate]):
             )
 
         else:
+            otp_data: OTPCreate = OTPCreate(
+                otp_type=otp_type,
+                otp=otp_code,
+                otp_expiry=otp_expiry,
+                user_id=user.id,
+            )
+
             self.otp_repository.create(
                 db_session=db_session,
-                record=OTPCreate(
-                    user_id=user.id,
-                    otp_type=OTPType.EMAIL,
-                    is_verified=False,
-                    otp=otp_code,
-                ),
+                record=otp_data,
             )
 
-    async def verify_email_request(
+    async def request_otp(
         self,
         db_session: DBSession,
-        record: EmailVerifyRequest,
+        otp_type: OTPType,
         background_tasks: BackgroundTasks,
-    ) -> str | None:
-        """Verify Email Request.
+        record: (
+            EmailVerifyRequest | ContactNoVerifyRequest | PasswordResetRequest
+        ),
+        current_user: CurrentUser | None = None,
+    ) -> BaseRead[OTP]:
+        """Request OTP for verification.
 
         :Description:
-        - This method is used to request email verification.
+        - This method handles OTP requests for email, SMS, or password reset.
 
         :Args:
-        - `record` (EmailStr): Record containing email details to be verified.
-        **(Required)**
+        RequestOTPParams with following fields:
+        - `db_session` (DBSession): Database session. **(Required)**
+        - `otp_type` (OTPType): Type of OTP to request. **(Required)**
+        - `background_tasks` (BackgroundTasks): Background tasks for sending
+        OTP. **(Required)**
+        - `record` (EmailVerifyRequest | ContactNoVerifyRequest |
+        PasswordResetRequest): Record containing contact info. **(Required)**
+        - `current_user` (CurrentUser): Current user. **(Optional)**
 
         :Returns:
-        - `None`
+        - `message` (BaseRead): Success or error message.
 
         """
-        user: User | None = self.user_repository.read_by_field(
-            db_session=db_session,
-            field=User.email.key,  # type: ignore[attr-defined]
-            value=record.email,
-        )
-
-        if not user:
-            return USER_NOT_FOUND
-
-        if not user.is_active:
-            return INACTIVE_USER
+        contact_info: PhoneNumber | EmailStr
+        user: User | None
 
         # pylint: disable=no-member
-        otp_record: OTP | None = self.otp_repository.read_by_multiple_fields(
-            db_session=db_session,
-            fields=[
-                (OTP.user_id.key, user.id),  # type: ignore[attr-defined]
-                (OTP.otp_type.key, OTPType.EMAIL),  # type: ignore
-            ],
-        )
+        if otp_type == OTPType.SMS:
+            if not isinstance(record, ContactNoVerifyRequest):
+                return BaseRead(message=INVALID_REQUEST_TYPE)
 
-        if otp_record and otp_record.is_verified:
-            return EMAIL_ALREADY_VERIFIED
-
-        # Send Email in Background Task
-        background_tasks.add_task(
-            self.background_email,
-            db_session=db_session,
-            user=user,
-            otp_record=otp_record,
-            email=record.email,
-        )
-
-        return None
-
-    def verify_email(
-        self, db_session: DBSession, record: EmailVerify
-    ) -> EmailVerifyRead:
-        """Verify Email.
-
-        :Description:
-        - This method is used to verify email.
-
-        :Args:
-        - `record` (EmailVerify): Record containing token to be verified.
-        **(Required)**
-
-        :Returns:
-
-
-        """
-        token_data: dict[str, str | datetime] = decode(
-            jwt=record.token,
-            key=settings.SECRET_KEY,
-            algorithms=[settings.ALGORITHM],
-        )
-
-        # pylint: disable=no-member
-        otp_record: OTP | None = self.otp_repository.read_by_multiple_fields(
-            db_session=db_session,
-            fields=[
-                (OTP.user_id.key, token_data["id"]),  # type: ignore
-                (OTP.otp_type.key, OTPType.EMAIL),  # type: ignore
-            ],
-        )
-
-        if not otp_record or otp_record.otp != token_data["token"]:
-            return EmailVerifyRead(message=INVALID_OTP)
-
-        if otp_record.is_verified:
-            return EmailVerifyRead(message=EMAIL_ALREADY_VERIFIED)
-
-        otp_record.is_verified = True
-
-        self.otp_repository.update_by_id(
-            db_session=db_session,
-            record_id=otp_record.id,
-            record=OTPUpdate(**otp_record.model_dump()),
-        )
-
-        user: User | None = self.user_repository.read_by_id(
-            db_session=db_session, record_id=otp_record.user_id
-        )
-
-        if not user:
-            return EmailVerifyRead(message=USER_NOT_FOUND)
-
-        if not user.is_active:
-            return EmailVerifyRead(message=INACTIVE_USER)
-
-        data: dict[str, int | str] = {
-            "id": user.id,
-            "username": user.username,
-            "email": user.email,
-        }
-
-        access_token: str = create_token(
-            data=data, token_type=TokenType.ACCESS_TOKEN
-        )
-
-        refresh_token: str = create_token(
-            data=data, token_type=TokenType.REFRESH_TOKEN
-        )
-
-        return EmailVerifyRead(
-            message=EMAIL_VERIFY_PURPOSE,
-            data=LoginResponse(
-                token_type=TOKEN_TYPE,
-                access_token=access_token,
-                refresh_token=refresh_token,
-            ),
-        )
-
-    async def background_sms(
-        self,
-        db_session: DBSession,
-        user: User,
-        otp_record: OTP | None,
-        contact_no: PhoneNumber,
-    ) -> None:
-        """Send SMS in Background Task.
-
-        :Description:
-        - This method is used to send SMS in background task.
-
-        :Args:
-        - `user` (User): User object containing user details. **(Required)**
-        - `otp_record` (OTP | None): OTP record.
-        - `contact_no` (str): Contact number to send the OTP. **(Required)**
-
-        :Returns:
-        - `None`
-
-        """
-        otp_code, otp_expiry = send_sms_otp(contact_no=contact_no)
-
-        if otp_record:
-            otp_record.otp = otp_code
-            otp_record.otp_expiry = otp_expiry
-
-            self.otp_repository.update_by_id(
+            user = self.user_repository.read_by_multiple_fields(
                 db_session=db_session,
-                record_id=otp_record.id,
-                record=OTPUpdate(**otp_record.model_dump()),
+                fields=[
+                    (User.id.key, current_user.id),  # type: ignore
+                    (
+                        User.contact_no.key,  # type: ignore[union-attr]
+                        record.contact_no,
+                    ),
+                ],
             )
+
+            if not record.contact_no:
+                return BaseRead(message=CONTACT_NO_NOT_FOUND)
+
+            contact_info = record.contact_no
 
         else:
-            self.otp_repository.create(
+            if not isinstance(
+                record, EmailVerifyRequest | PasswordResetRequest
+            ):
+                return BaseRead(message=INVALID_REQUEST_TYPE)
+
+            user = self.user_repository.read_by_field(
                 db_session=db_session,
-                record=OTPCreate(
-                    user_id=user.id,
-                    otp_type=OTPType.SMS,
-                    is_verified=False,
-                    otp=otp_code,
-                    otp_expiry=otp_expiry,
-                ),
+                field=User.email.key,  # type: ignore[attr-defined]
+                value=record.email,
             )
 
-    async def verify_contact_no_request(
-        self,
-        db_session: DBSession,
-        record: ContactNoVerifyRequest,
-        current_user: CurrentUser,
-        background_tasks: BackgroundTasks,
-    ) -> str | None:
-        """Verify Contact Number Request.
-
-        :Description:
-        - This method is used to request contact number verification.
-
-        :Args:
-        - `record` (ContactNoBase): Record containing contact number details
-        to be verified. **(Required)**
-
-        :Returns:
-        - `None`
-
-        """
-        # pylint: disable=no-member
-        user: User | None = self.user_repository.read_by_multiple_fields(
-            db_session=db_session,
-            fields=[
-                (User.id.key, current_user.id),  # type: ignore[attr-defined]
-                (User.contact_no.key, record.contact_no),  # type: ignore
-            ],
-        )
+            contact_info = record.email
 
         if not user:
-            return USER_NOT_FOUND
+            return BaseRead(message=USER_NOT_FOUND)
 
         if not user.is_active:
-            return INACTIVE_USER
+            return BaseRead(message=INACTIVE_USER)
 
-        # pylint: disable=no-member
+        # Check for existing OTP record
         otp_record: OTP | None = self.otp_repository.read_by_multiple_fields(
             db_session=db_session,
             fields=[
                 (OTP.user_id.key, user.id),  # type: ignore[attr-defined]
-                (OTP.otp_type.key, OTPType.SMS),  # type: ignore
+                (OTP.otp_type.key, otp_type),  # type: ignore[attr-defined]
             ],
         )
 
-        if otp_record and otp_record.is_verified:
-            return CONTACT_NO_VERIFIED
-
-        # Send SMS in Background Task
-        background_tasks.add_task(
-            self.background_sms,
-            db_session=db_session,
-            user=user,
-            otp_record=otp_record,
-            contact_no=record.contact_no,
-        )
-
-        return CONTACT_NO_SENT_SUCCESS
-
-    def verify_contact_no(
-        self,
-        db_session: DBSession,
-        record: ContactNoVerify,
-        current_user: CurrentUser,
-    ) -> ContactNoVerifyRead:
-        """Verify Contact Number.
-
-        :Description:
-        - This method is used to verify contact number.
-
-        :Args:
-        - `record` (ContactNoVerify): Record containing token to be verified.
-        **(Required)**
-
-        :Returns:
-        - `ContactNoVerifyRead`: Response containing verification status and
-        data.
-
-        """
-        # pylint: disable=no-member
-        otp_record: OTP | None = self.otp_repository.read_by_multiple_fields(
-            db_session=db_session,
-            fields=[
-                (OTP.user_id.key, current_user.id),  # type: ignore
-                (OTP.otp_type.key, OTPType.SMS),  # type: ignore
-            ],
-        )
-
-        if not otp_record or otp_record.otp != record.otp:
-            return ContactNoVerifyRead(message=INVALID_OTP)
-
-        if otp_record.is_verified:
-            return ContactNoVerifyRead(message=CONTACT_NO_VERIFIED)
-
-        if otp_record.otp_expiry and otp_record.otp_expiry < datetime.now(
-            tz=UTC
+        if (
+            otp_record
+            and otp_record.is_verified
+            and otp_type != OTPType.PASSWORD
         ):
-            return ContactNoVerifyRead(message=EXPIRED_OTP)
+            return BaseRead(message=ALREADY_VERIFIED)
 
-        otp_record.is_verified = True
-        otp_record.otp_expiry = None
-
-        self.otp_repository.update_by_id(
-            db_session=db_session,
-            record_id=otp_record.id,
-            record=OTPUpdate(**otp_record.model_dump()),
-        )
-
-        user: User | None = self.user_repository.read_by_id(
-            db_session=db_session, record_id=otp_record.user_id
-        )
-
-        if not user:
-            return ContactNoVerifyRead(message=USER_NOT_FOUND)
-
-        if not user.is_active:
-            return ContactNoVerifyRead(message=INACTIVE_USER)
-
-        return ContactNoVerifyRead(message=CONTACT_NO_VERIFIED_SUCCESS)
-
-    async def background_password_reset(
-        self,
-        db_session: DBSession,
-        user: User,
-        otp_record: OTP | None,
-        email: EmailStr,
-    ) -> None:
-        """Send Password Reset Email in Background Task.
-
-        :Description:
-        - This method is used to send password reset email in background task.
-
-        :Args:
-        - `user` (User): User object containing user details. **(Required)**
-        - `otp_record` (OTP | None): OTP record.
-        - `email` (EmailStr): Email address to send the OTP. **(Required)**
-
-        :Returns:
-        - `None`
-
-        """
-        otp_code: str = await send_email_otp(
-            user_id=user.id,
-            record=EmailBase(
-                subject=PASSWORD_RESET_SUBJECT,
-                email_purpose=PASSWORD_RESET_PURPOSE,
-                user_name=f"{user.first_name} {user.last_name}",
-                email=email,
-            ),
-        )
-
-        if otp_record:
-            otp_record.otp = otp_code
-
-            self.otp_repository.update_by_id(
-                db_session=db_session,
-                record_id=otp_record.id,
-                record=OTPUpdate(**otp_record.model_dump()),
-            )
-
-        else:
-            self.otp_repository.create(
-                db_session=db_session,
-                record=OTPCreate(
-                    user_id=user.id,
-                    otp_type=OTPType.PASSWORD,
-                    is_verified=False,
-                    otp=otp_code,
-                ),
-            )
-
-    async def reset_password_request(
-        self,
-        db_session: DBSession,
-        record: PasswordResetRequest,
-        background_tasks: BackgroundTasks,
-    ) -> str | None:
-        """Reset Password Request.
-
-        :Description:
-        - This method is used to request password reset.
-
-        :Args:
-        - `record` (PasswordResetRequest): Record containing email details to
-        be verified. **(Required)**
-
-        :Returns:
-        - `None`
-
-        """
-        user: User | None = self.user_repository.read_by_field(
-            db_session=db_session,
-            field=User.email.key,  # type: ignore[attr-defined]
-            value=record.email,
-        )
-
-        if not user:
-            return USER_NOT_FOUND
-
-        if not user.is_active:
-            return INACTIVE_USER
-
-        # pylint: disable=no-member
-        otp_record: OTP | None = self.otp_repository.read_by_multiple_fields(
-            db_session=db_session,
-            fields=[
-                (OTP.user_id.key, user.id),  # type: ignore[attr-defined]
-                (OTP.otp_type.key, OTPType.PASSWORD),  # type: ignore
-            ],
-        )
-
-        if otp_record and otp_record.is_verified:
-            return EMAIL_ALREADY_VERIFIED
-
-        # Send Email in Background Task
+        # Send OTP in background
         background_tasks.add_task(
-            self.background_password_reset,
+            func=self.send_otp_background,
             db_session=db_session,
             user=user,
             otp_record=otp_record,
-            email=record.email,
+            otp_type=otp_type,
+            contact_info=contact_info,
         )
 
-        return None
+        return BaseRead(message=VERIFICATION_SENT_SUCCESS)
 
-    def reset_password(
+    def verify_otp(
         self,
         db_session: DBSession,
-        record: PasswordReset,
-    ) -> PasswordResetRead:
-        """Reset Password.
+        otp_type: OTPType,
+        record: EmailVerify | ContactNoVerify | PasswordReset,
+        current_user: CurrentUser | None = None,
+    ) -> BaseRead[LoginResponse]:
+        """Verify OTP and perform associated action.
 
         :Description:
-        - This method is used to reset password.
+        - This method verifies OTP requests for email, SMS, or password reset.
 
         :Args:
-        - `record` (PasswordReset): Record containing token and new password.
-        **(Required)**
+        - `db_session` (DBSession): Database session. **(Required)**
+        - `otp_type` (OTPType): Type of OTP being verified. **(Required)**
+        - `record` (EmailVerifyRequest | ContactNoVerifyRequest |
+        PasswordResetRequest): Record containing OTP/token info. **(Required)**
+        - `current_user` (CurrentUser): Current user. **(Required)**
 
         :Returns:
-        - `PasswordResetRead`: Response containing reset status and data.
+        - `data` (BaseRead):Data related to OTP verification process.
 
         """
-        token_data: dict[str, str | datetime] = decode(
-            jwt=record.token,
-            key=settings.SECRET_KEY,
-            algorithms=[settings.ALGORITHM],
-        )
+        user_id: int
+        otp_to_verify: str
+
+        if otp_type == OTPType.SMS and current_user:
+            user_id = current_user.id
+            otp_to_verify = record.token
+
+        else:
+            token_data: dict[str, int | str | datetime | EmailStr] = decode(
+                jwt=record.token,
+                key=settings.SECRET_KEY,
+                algorithms=[settings.ALGORITHM],
+            )
+
+            user_id = token_data["id"]  # type: ignore[assignment]
+            otp_to_verify = token_data["token"]  # type: ignore[assignment]
 
         # pylint: disable=no-member
         otp_record: OTP | None = self.otp_repository.read_by_multiple_fields(
             db_session=db_session,
             fields=[
-                (OTP.user_id.key, token_data["id"]),  # type: ignore
-                (OTP.otp_type.key, OTPType.PASSWORD),  # type: ignore
+                (OTP.user_id.key, user_id),  # type: ignore[attr-defined]
+                (OTP.otp_type.key, otp_type),  # type: ignore[attr-defined]
             ],
         )
 
-        if not otp_record or otp_record.otp != token_data["token"]:
-            return PasswordResetRead(message=INVALID_OTP)
+        if not otp_record or otp_record.otp != otp_to_verify:
+            return BaseRead(message=INVALID_OTP)
+
+        if otp_record.is_verified:
+            return BaseRead(message=ALREADY_VERIFIED)
+
+        # Check expiry for SMS
+        if (
+            otp_type == OTPType.SMS
+            and otp_record.otp_expiry
+            and otp_record.otp_expiry < datetime.now(tz=UTC)
+        ):
+            return BaseRead(message=EXPIRED_OTP)
 
         otp_record.is_verified = True
+
+        if otp_type == OTPType.SMS:
+            otp_record.otp_expiry = None
 
         self.otp_repository.update_by_id(
             db_session=db_session,
@@ -569,43 +338,45 @@ class OTPService(BaseService[OTP, OTPCreate, OTPUpdate]):
             record=OTPUpdate(**otp_record.model_dump()),
         )
 
-        user: User | None = self.user_repository.read_by_id(
-            db_session=db_session, record_id=otp_record.user_id
-        )
+        if otp_type == OTPType.SMS:
+            return BaseRead(message=VERIFICATION_SUCCESS)
+
+        user: User | None = otp_record.user
 
         if not user:
-            return PasswordResetRead(message=USER_NOT_FOUND)
+            return BaseRead(message=USER_NOT_FOUND)
 
         if not user.is_active:
-            return PasswordResetRead(message=INACTIVE_USER)
+            return BaseRead(message=INACTIVE_USER)
 
-        user.password = get_password_hash(password=record.new_password)
+        # Handle password reset
+        if otp_type == OTPType.PASSWORD:
+            if not isinstance(record, PasswordReset):
+                return BaseRead(message=INVALID_OTP)
 
-        self.user_repository.update_by_id(
-            db_session=db_session,
-            record_id=user.id,
-            record=UserUpdate(**user.model_dump()),
-        )
+            user.password = get_password_hash(password=record.new_password)
 
-        data: dict[str, int | str] = {
+            self.user_repository.update_by_id(
+                db_session=db_session,
+                record_id=user.id,
+                record=UserUpdate(**user.model_dump()),
+            )
+
+        data: dict[str, int | str | EmailStr] = {
             "id": user.id,
             "username": user.username,
             "email": user.email,
         }
 
-        access_token: str = create_token(
-            data=data, token_type=TokenType.ACCESS_TOKEN
-        )
-
-        refresh_token: str = create_token(
-            data=data, token_type=TokenType.REFRESH_TOKEN
-        )
-
-        return PasswordResetRead(
-            message=PASSWORD_CHANGE_SUCCESS,
+        return BaseRead(
+            message=VERIFICATION_SUCCESS,
             data=LoginResponse(
                 token_type=TOKEN_TYPE,
-                access_token=access_token,
-                refresh_token=refresh_token,
+                access_token=create_token(
+                    data=data, token_type=TokenType.ACCESS_TOKEN
+                ),
+                refresh_token=create_token(
+                    data=data, token_type=TokenType.REFRESH_TOKEN
+                ),
             ),
         )

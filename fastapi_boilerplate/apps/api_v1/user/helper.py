@@ -61,9 +61,6 @@ def validate_contact(contact: PhoneNumber) -> str:
     - `contact` (str): Validated contact number.
 
     """
-    if contact is None:
-        return contact
-
     return str(contact).replace("tel:", "")
 
 

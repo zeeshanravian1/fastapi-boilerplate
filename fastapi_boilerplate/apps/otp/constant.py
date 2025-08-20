@@ -13,35 +13,31 @@ from fastapi_boilerplate.core.config import settings
 EMAIL_TEMPLATE_FOLDER: Path = Path("static/email")
 EMAIL_TEMPLATE_FILE: str = "email.html"
 
-EMAIL_VERIFY_SUBJECT: str = f"Welcome to {settings.PROJECT_TITLE}"
-EMAIL_VERIFY_PURPOSE: str = "Verify Email"
+TOKEN: str = "123456"
 
-EMAIL_ALREADY_VERIFIED: str = "Email already verified"
-EMAIL_SENT_SUCCESS: str = "Email sent successfully"
-EMAIL_VERIFIED_SUCCESS: str = "Email verified successfully"
+WELCOME_SUBJECT: str = f"Welcome to {settings.PROJECT_TITLE}"
+RESET_PASSWORD_SUBJECT: str = "Reset Password Request"
 
-CONTACT_NO_VERIFY_SUBJECT: str = f"Welcome to {settings.PROJECT_TITLE}"
-CONTACT_NO_VERIFY_PURPOSE: str = "Verify Contact Number"
-CONTACT_NO_VERIFY_BODY: str = f"""
-Hi,
-Please use the following OTP to verify your contact number:
+VERIFICATION_SENT_SUCCESS: str = "Verification code sent successfully"
+VERIFICATION_SUCCESS: str = "Verification completed successfully"
+ALREADY_VERIFIED: str = "Already verified"
+PASSWORD_RESET_SUCCESS: str = "Password reset successfully"
+
+INVALID_OTP: str = "Invalid OTP code, please request a new one"
+EXPIRED_OTP: str = "OTP expired"
+CONTACT_NO_NOT_FOUND: str = "Contact number not found"
+INVALID_REQUEST_TYPE: str = "Invalid request type for this OTP method"
+
+# SMS template
+CONTACT_NO_VERIFY_BODY_TEMPLATE: str = f"""
+Hi {{user_name}},
+Please use following OTP to verify your contact number:
 
 {{otp_code}}
 
 Thanks,
-The {settings.PROJECT_TITLE} Team
+{settings.PROJECT_TITLE} Team
 """
-
-CONTACT_NO_VERIFIED: str = "Contact number already verified"
-CONTACT_NO_SENT_SUCCESS: str = "OTP sent successfully"
-CONTACT_NO_VERIFIED_SUCCESS: str = "Contact number verified successfully"
-
-PASSWORD_RESET_SUBJECT: str = "Reset Password Request"
-PASSWORD_RESET_PURPOSE: str = "Reset Password"
-PASSWORD_CHANGE_SUCCESS: str = "Password changed successfully"
-
-INVALID_OTP: str = "Invalid OTP code, please request a new one"
-EXPIRED_OTP: str = "OTP expired"
 
 
 class OTPType(str, Enum):
@@ -71,3 +67,16 @@ class OTPType(str, Enum):
 
         """
         return [(key.value, key.name) for key in cls]
+
+
+class OTPPurpose(str, Enum):
+    """OTP Purpose Enum.
+
+    :Description:
+    - This enum is used to define OTP purpose.
+
+    """
+
+    EMAIL_VERIFY = "Verify Email"  # nosec B105
+    CONTACT_VERIFY = "Verify Contact Number"  # nosec B105
+    PASSWORD_RESET = "Reset Password"  # nosec B105

@@ -9,7 +9,7 @@ from collections.abc import Sequence
 
 from pydantic import EmailStr, field_validator
 from pydantic_extra_types.phone_numbers import PhoneNumber
-from sqlmodel import Field, SQLModel
+from sqlmodel import Field, Relationship, SQLModel
 from sqlmodel._compat import SQLModelConfig
 
 from fastapi_boilerplate.apps.base.model import (
@@ -20,7 +20,13 @@ from fastapi_boilerplate.apps.base.model import (
 )
 from fastapi_boilerplate.database.connection import Base
 
-from .constant import PASSWORD, PASSWORD_CHANGE_SUCCESS
+from .constant import (
+    CONTACT_NO,
+    EMAIL,
+    PASSWORD,
+    PASSWORD_CHANGE_SUCCESS,
+    USERNAME,
+)
 from .helper import (
     validate_contact,
     validate_email,
@@ -64,17 +70,16 @@ class UserBase(SQLModel):
     )
     contact_no: PhoneNumber | None = Field(
         default=None,
-        schema_extra={"examples": ["+1 417-555-1234"]},
+        unique=True,
+        schema_extra={"examples": [CONTACT_NO]},
     )
     username: str = Field(
         min_length=1,
         max_length=255,
         unique=True,
-        schema_extra={"examples": ["johndoe"]},
+        schema_extra={"examples": [USERNAME]},
     )
-    email: EmailStr = Field(
-        unique=True, schema_extra={"examples": ["johndoe@example.com"]}
-    )
+    email: EmailStr = Field(unique=True, schema_extra={"examples": [EMAIL]})
     address: str | None = Field(
         default=None,
         min_length=1,
@@ -164,6 +169,10 @@ class User(Base, UserBase, table=True):
     is_active: bool = Field(  # type: ignore[unused-ignore]
         default=True,
         schema_extra={"examples": [True]},
+    )
+
+    otps: list["OTP"] = Relationship(  # type: ignore # noqa: F821
+        back_populates="user", cascade_delete=True
     )
 
 
@@ -370,11 +379,11 @@ class UserPatch(UserBase):
     )
     username: str | None = Field(  # type: ignore[assignment]
         default=None,
-        schema_extra={"examples": ["johndoe"]},
+        schema_extra={"examples": [USERNAME]},
     )
     email: EmailStr | None = Field(  # type: ignore[assignment]
         default=None,
-        schema_extra={"examples": ["johndoe@example.com"]},
+        schema_extra={"examples": [EMAIL]},
     )
 
 

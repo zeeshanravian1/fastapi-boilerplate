@@ -7,131 +7,101 @@ Description:
 
 import secrets
 from datetime import UTC, datetime, timedelta
-from uuid import UUID
 
 from jwt import encode
 from pydantic import AnyUrl
-from pydantic_extra_types.phone_numbers import PhoneNumber
 
 from fastapi_boilerplate.core.config import settings
 
-from .constant import CONTACT_NO_VERIFY_BODY, CONTACT_NO_VERIFY_SUBJECT
-from .model import EmailBase, EmailData, SendEmail
+from .model import EmailBase, EmailData, SendEmail, SendSMS
 from .send_email import send_email
 from .send_sms import send_sms
 
 
-def generate_otp_code() -> str:
-    """Generates 6 digit OTP code.
+class OTPSender:
+    """OTP Sender class for handling email and SMS OTP operations."""
 
-    :Description:
-    - This method is used to generate a 6 digit OTP.
+    def generate_otp_code(self) -> str:
+        """Generates 6 digit OTP code.
 
-    :Args:
-    - `None`
+        :Description:
+        - This method is used to generate a 6 digit OTP.
 
-    :Returns:
-    - `otp_code` (str): 6 digit OTP code.
+        :Args:
+        - `None`
 
-    """
-    return str(secrets.randbelow(10**6)).zfill(6)
+        :Returns:
+        - `otp_code` (str): 6 digit OTP code.
 
+        """
+        return str(secrets.randbelow(exclusive_upper_bound=10**6)).zfill(6)
 
-async def send_email_otp(user_id: UUID | int, record: EmailBase) -> str:
-    """Sends an email with OTP.
+    async def send_otp(
+        self, record: EmailBase | SendSMS
+    ) -> tuple[str, datetime]:
+        """Sends OTP via email or SMS.
 
-    :Description:
-    - This method is used to encode OTP code and send it to user via email.
+        :Description:
+        - This method is used to send OTP code via email or SMS.
 
-    :Args:
-    - `user_id` (UUID | int): Unique identifier for user. **(Required)**
-    Email details to be sent with following fields:
-    - `subject` (str): Subject of email. **(Required)**
-    - `email_purpose` (str): Purpose of email. **(Required)**
-    - `user_name` (str): Full name of user. **(Required)**
-    - `email` (list[str]): Email of user. **(Required)**
+        :Args:
+        - `user_id` (UUID | int): Unique identifier for user. **(Optional)**
+        - `record` (EmailBase | SendSMS): Record containing details for sending
+        OTP. **(Required)**
 
-    :Returns:
-    - `otp_code` (str): OTP code sent to user.
+        :Returns:
+        - `data` (tuple[str, datetime | None]): OTP code and expiry time.
 
-    """
-    # Generate OTP Code
-    otp_code: str = generate_otp_code()
-    otp_expiry_time: datetime = datetime.now(tz=UTC) + timedelta(
-        minutes=settings.EMAIL_RESET_TOKEN_EXPIRE_MINUTES
-    )
+        """
+        otp_code: str = self.generate_otp_code()
 
-    # Encode OTP Code
-    encoded_jwt: bytes = encode(
-        payload={
-            "id": user_id,
-            "email": record.email,
-            "token": otp_code,
-            "exp": otp_expiry_time,
-        },
-        key=settings.SECRET_KEY,
-        algorithm=settings.ALGORITHM,
-    )
-
-    url: AnyUrl = AnyUrl(
-        url="".join(
-            [
-                settings.FRONTEND_HOST,
-                "/",
-                record.email_purpose.replace(" ", "-").lower(),
-                "/",
-                str(encoded_jwt),
-            ]
+        otp_expiry_time: datetime = datetime.now(tz=UTC) + timedelta(
+            minutes=(
+                settings.SMS_RESET_TOKEN_EXPIRE_MINUTES
+                if isinstance(record, SendSMS)
+                else settings.EMAIL_RESET_TOKEN_EXPIRE_MINUTES
+            )
         )
-    )
 
-    await send_email(
-        email=SendEmail(
-            email=[record.email],
-            subject=record.subject,
-            body=EmailData(
-                url=url,
-                otp_code=otp_code,
-                user_name=record.user_name,
-                email_purpose=record.email_purpose,
-                company_name=settings.PROJECT_TITLE,
-                base_url=settings.FRONTEND_HOST,
-            ),
-        )
-    )
+        if isinstance(record, EmailBase):
+            encoded_jwt: bytes = encode(
+                payload={
+                    "id": record.user_id,
+                    "email": record.email,
+                    "token": otp_code,
+                    "exp": otp_expiry_time,
+                },
+                key=settings.SECRET_KEY,
+                algorithm=settings.ALGORITHM,
+            )
 
-    return otp_code
+            url: AnyUrl = AnyUrl(
+                url="".join(
+                    [
+                        settings.FRONTEND_HOST,
+                        "/",
+                        record.email_purpose.replace(" ", "-").lower(),
+                        "/",
+                        str(encoded_jwt),
+                    ]
+                )
+            )
 
+            await send_email(
+                email=SendEmail(
+                    email=[record.email],
+                    subject=record.subject,
+                    body=EmailData(
+                        url=url,
+                        email_purpose=record.email_purpose,
+                        otp_code=otp_code,
+                        user_name=record.user_name,
+                        company_name=settings.PROJECT_TITLE,
+                    ),
+                )
+            )
 
-def send_sms_otp(contact_no: PhoneNumber) -> tuple[str, datetime]:
-    """Sends an SMS with OTP.
+        else:
+            send_sms(sms=record)
 
-    :Description:
-    - This method is used to send an SMS with OTP to user.
-
-    :Args:
-    - `contact_no` (PhoneNumber): Phone number to which the SMS will be sent.
-    **(Required)**
-    Contact number details to be sent with following fields:
-    - `subject` (str): Subject of SMS. **(Required)**
-    - `user_name` (str): Full name of user. **(Required)**
-
-    :Returns:
-    - `otp_code` (str): OTP code sent to user.
-    - `otp_expiry` (datetime): Expiry time of OTP code.
-
-    """
-    # Generate OTP Code
-    otp_code: str = generate_otp_code()
-    otp_expiry_time: datetime = datetime.now(tz=UTC) + timedelta(
-        minutes=settings.SMS_RESET_TOKEN_EXPIRE_MINUTES
-    )
-
-    send_sms(
-        contact_no=contact_no,
-        body=CONTACT_NO_VERIFY_SUBJECT
-        + "\n"
-        + CONTACT_NO_VERIFY_BODY.format(otp_code=otp_code),
-    )
-
-    return otp_code, otp_expiry_time
+        return otp_code, otp_expiry_time

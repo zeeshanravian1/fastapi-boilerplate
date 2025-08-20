@@ -5,22 +5,23 @@ Description:
 
 """
 
-from pydantic_extra_types.phone_numbers import PhoneNumber
 from twilio.rest import Client
 
 from fastapi_boilerplate.core.config import settings
 
+from .model import SendSMS
 
-def send_sms(contact_no: PhoneNumber, body: str) -> None:
+
+def send_sms(sms: SendSMS) -> None:
     """Sends SMS to user.
 
     :Description:
     - This method is used to send an SMS to user.
 
     :Args:
-    - `contact_no` (PhoneNumber): Phone number to which the SMS will be sent.
+    - `contact_no` (PhoneNumber): Phone number to which SMS will be sent.
     **(Required)**
-    - `body` (str): Content of the SMS to be sent. **(Required)**
+    - `body` (str): Content of SMS to be sent. **(Required)**
 
     :Returns:
     - `None`
@@ -32,7 +33,7 @@ def send_sms(contact_no: PhoneNumber, body: str) -> None:
     )
 
     client.messages.create(  # type: ignore[no-untyped-call]
-        body=body,
         from_=settings.TWILIO_PHONE_NUMBER,
-        to=contact_no,
+        to=sms.contact_no,
+        body=sms.subject + "\n" + sms.body,
     )
