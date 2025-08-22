@@ -18,8 +18,8 @@ from .constant import (
 )
 from .helper import UserHelper
 from .model import (
-    PasswordChange,
     PasswordChangeRead,
+    RequestPasswordChange,
     User,
     UserCreate,
     UserUpdate,
@@ -95,7 +95,7 @@ class UserService(BaseService[User, UserCreate, UserUpdate]):
         self,
         db_session: DBSession,
         record_id: UUID | int,
-        record: PasswordChange,
+        record: RequestPasswordChange,
     ) -> PasswordChangeRead | BaseRead[User]:
         """Change User Password.
 
@@ -105,7 +105,8 @@ class UserService(BaseService[User, UserCreate, UserUpdate]):
         :Args:
         - `db_session` (DBSession): Database session. **(Required)**
         - `record_id` (int): User ID. **(Required)**
-        - `record` (PasswordChange): Password change request. **(Required)**
+        - `record` (RequestPasswordChange): Password change request.
+        **(Required)**
 
         :Returns:
         - `record` (PasswordChangeRead): Password change response.

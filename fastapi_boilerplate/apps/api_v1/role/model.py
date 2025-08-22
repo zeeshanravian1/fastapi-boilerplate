@@ -79,23 +79,7 @@ class RoleCreate(RoleBase):
     """
 
 
-class RoleResponse(Base, RoleBase):
-    """Role Response Model.
-
-    :Description:
-    - This class contains model for role response.
-
-    :Attributes:
-    - `id` (UUID | int): Unique identifier for role.
-    - `role_name` (str): Name of role.
-    - `role_description` (str | None): Description of role.
-    - `created_at` (datetime): Timestamp when role was created.
-    - `updated_at` (datetime): Timestamp when role was last updated.
-
-    """
-
-
-class RoleRead(BaseRead[RoleResponse]):
+class RoleRead(BaseRead[Role]):
     """Role Read Model.
 
     :Description:
@@ -109,10 +93,10 @@ class RoleRead(BaseRead[RoleResponse]):
 
     """
 
-    data: RoleResponse | None = Field(default=None)
+    data: Role | None = Field(default=None)
 
 
-class RoleBulkRead(BaseRead[RoleResponse]):
+class RoleBulkRead(BaseRead[Role]):
     """Role Bulk Read Model.
 
     :Description:
@@ -126,10 +110,10 @@ class RoleBulkRead(BaseRead[RoleResponse]):
 
     """
 
-    data: list[RoleResponse]  # type: ignore[assignment]
+    data: list[Role]  # type: ignore[assignment]
 
 
-class RolePaginationData(BasePaginationData[RoleResponse]):
+class RolePaginationData(BasePaginationData[Role]):
     """Role Pagination Data Model.
 
     :Description:
@@ -140,15 +124,15 @@ class RolePaginationData(BasePaginationData[RoleResponse]):
     - `limit` (int): Number of records per page.
     - `total_pages` (int): Total number of pages.
     - `total_records` (int): Total number of records.
-    - `records` (Sequence[RoleResponse]): List of role records for current
+    - `records` (Sequence[Role]): List of role records for current
     page.
 
     """
 
-    records: Sequence[RoleResponse]
+    records: Sequence[Role]
 
 
-class RolePaginationRead(BasePaginationRead[RoleResponse]):
+class RolePaginationRead(BasePaginationRead[Role]):
     """Role Pagination Read Model.
 
     :Description:

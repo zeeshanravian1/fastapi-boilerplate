@@ -24,8 +24,8 @@ from fastapi_boilerplate.database.session import DBSession
 
 from .constant import USER_NOT_FOUND
 from .model import (
-    PasswordChange,
     PasswordChangeRead,
+    RequestPasswordChange,
     User,
     UserBulkPatch,
     UserBulkRead,
@@ -35,7 +35,6 @@ from .model import (
     UserPaginationRead,
     UserPatch,
     UserRead,
-    UserResponse,
     UserUpdate,
 )
 from .service import UserService
@@ -97,10 +96,7 @@ async def create_user(
     """
     user: User = user_service.create(db_session=db_session, record=record)
 
-    return UserRead(
-        message="User created successfully",
-        data=UserResponse.model_validate(obj=user),
-    )
+    return UserRead(message="User created successfully", data=user)
 
 
 @router.post(
@@ -160,10 +156,7 @@ async def create_users(
         db_session=db_session, records=records
     )
 
-    return UserBulkRead(
-        message="Users created successfully",
-        data=[UserResponse.model_validate(obj=user) for user in users],
-    )
+    return UserBulkRead(message="Users created successfully", data=users)
 
 
 @router.get(
@@ -211,10 +204,7 @@ async def read_users_by_ids(
         db_session=db_session, record_ids=user_ids
     )
 
-    return UserBulkRead(
-        message="Users retrieved successfully",
-        data=[UserResponse.model_validate(obj=user) for user in users],
-    )
+    return UserBulkRead(message="Users retrieved successfully", data=users)
 
 
 @router.get(
@@ -267,10 +257,7 @@ async def read_user_by_id(
             status_code=status.HTTP_404_NOT_FOUND, detail=USER_NOT_FOUND
         )
 
-    return UserRead(
-        message="User retrieved successfully",
-        data=UserResponse.model_validate(obj=user),
-    )
+    return UserRead(message="User retrieved successfully", data=user)
 
 
 @router.get(
@@ -321,9 +308,7 @@ async def read_all_users(
             limit=users.limit,
             total_pages=users.total_pages,
             total_records=users.total_records,
-            records=[
-                UserResponse.model_validate(obj=user) for user in users.records
-            ],
+            records=users.records,
         ),
     )
 
@@ -381,14 +366,11 @@ async def update_users(
     - `is_active` (bool): Status of user account.
 
     """
-    updated_users: list[User] = user_service.update_bulk_by_ids(
+    users: list[User] = user_service.update_bulk_by_ids(
         db_session=db_session, records=records
     )
 
-    return UserBulkRead(
-        message="Users updated successfully",
-        data=[UserResponse.model_validate(obj=user) for user in updated_users],
-    )
+    return UserBulkRead(message="Users updated successfully", data=users)
 
 
 @router.put(
@@ -446,19 +428,16 @@ async def update_user(
     - `is_active` (bool): Status of user account.
 
     """
-    updated_user: User | None = user_service.update_by_id(
+    user: User | None = user_service.update_by_id(
         db_session=db_session, record_id=user_id, record=record
     )
 
-    if not isinstance(updated_user, User):
+    if not isinstance(user, User):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail=USER_NOT_FOUND
         )
 
-    return UserRead(
-        message="User updated successfully",
-        data=UserResponse.model_validate(obj=updated_user),
-    )
+    return UserRead(message="User updated successfully", data=user)
 
 
 @router.patch(
@@ -516,13 +495,12 @@ async def patch_users(
     - `updated_at` (datetime): Datetime of user updation.
 
     """
-    updated_users: list[User] = user_service.update_bulk_by_ids(
+    users: list[User] = user_service.update_bulk_by_ids(
         db_session=db_session, records=records
     )
 
     return UserBulkRead(
-        message="Users partially updated successfully",
-        data=[UserResponse.model_validate(obj=user) for user in updated_users],
+        message="Users partially updated successfully", data=users
     )
 
 
@@ -583,21 +561,18 @@ async def patch_user(
     - `updated_at` (datetime): Datetime of user updation.
 
     """
-    updated_user: User | None = user_service.update_by_id(
+    user: User | None = user_service.update_by_id(
         db_session=db_session,
         record_id=user_id,
         record=record,  # type: ignore[arg-type]
     )
 
-    if not isinstance(updated_user, User):
+    if not isinstance(user, User):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail=USER_NOT_FOUND
         )
 
-    return UserRead(
-        message="User partially updated successfully",
-        data=UserResponse.model_validate(obj=updated_user),
-    )
+    return UserRead(message="User partially updated successfully", data=user)
 
 
 @router.delete(
@@ -680,7 +655,7 @@ async def password_change(
         UserService,
         Depends(dependency=ServiceInitializer(service_class=UserService)),
     ],
-    record: PasswordChange,
+    record: RequestPasswordChange,
     current_user: CurrentUser,
 ) -> PasswordChangeRead:
     """Change password of a single user.

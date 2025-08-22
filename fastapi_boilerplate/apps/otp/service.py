@@ -24,7 +24,7 @@ from fastapi_boilerplate.apps.auth.model import LoginResponse
 from fastapi_boilerplate.apps.base.model import BaseRead
 from fastapi_boilerplate.apps.base.service import BaseService
 from fastapi_boilerplate.core.config import settings
-from fastapi_boilerplate.core.security import CurrentUser, create_token
+from fastapi_boilerplate.core.security import CurrentUser, SecurityManager
 from fastapi_boilerplate.database.session import DBSession
 
 from .constant import (
@@ -272,12 +272,12 @@ class OTPService(BaseService[OTP, OTPCreate, OTPUpdate]):
         """Validate OTP Record.
 
         :Description:
-        - This method validates the OTP record for the given user and OTP type.
+        - This method validates OTP record for given user and OTP type.
 
         :Args:
         - `db_session` (DBSession): Database session. **(Required)**
         - `otp_type` (OTPType): Type of OTP being verified. **(Required)**
-        - `user_id` (int): Unique identifier for the user. **(Required)**
+        - `user_id` (int): Unique identifier for user. **(Required)**
         - `otp_to_verify` (str): OTP code to verify. **(Required)**
 
         :Returns:
@@ -411,10 +411,10 @@ class OTPService(BaseService[OTP, OTPCreate, OTPUpdate]):
             message=VERIFICATION_SUCCESS,
             data=LoginResponse(
                 token_type=TOKEN_TYPE,
-                access_token=create_token(
+                access_token=SecurityManager.create_token(
                     data=data, token_type=TokenType.ACCESS_TOKEN
                 ),
-                refresh_token=create_token(
+                refresh_token=SecurityManager.create_token(
                     data=data, token_type=TokenType.REFRESH_TOKEN
                 ),
                 user=user,

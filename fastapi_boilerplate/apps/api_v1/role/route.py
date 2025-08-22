@@ -32,7 +32,6 @@ from .model import (
     RolePaginationRead,
     RolePatch,
     RoleRead,
-    RoleResponse,
     RoleUpdate,
 )
 from .service import RoleService
@@ -76,10 +75,7 @@ async def create_role(
     """
     role: Role = role_service.create(db_session=db_session, record=record)
 
-    return RoleRead(
-        message="Role created successfully",
-        data=RoleResponse.model_validate(obj=role),
-    )
+    return RoleRead(message="Role created successfully", data=role)
 
 
 @router.post(
@@ -120,10 +116,7 @@ async def create_roles(
         db_session=db_session, records=records
     )
 
-    return RoleBulkRead(
-        message="Roles created successfully",
-        data=[RoleResponse.model_validate(obj=role) for role in roles],
-    )
+    return RoleBulkRead(message="Roles created successfully", data=roles)
 
 
 @router.get(
@@ -163,10 +156,7 @@ async def read_roles_by_ids(
         db_session=db_session, record_ids=role_ids
     )
 
-    return RoleBulkRead(
-        message="Roles retrieved successfully",
-        data=[RoleResponse.model_validate(obj=role) for role in roles],
-    )
+    return RoleBulkRead(message="Roles retrieved successfully", data=roles)
 
 
 @router.get(
@@ -212,10 +202,7 @@ async def read_role_by_id(
             detail=ROLE_NOT_FOUND,
         )
 
-    return RoleRead(
-        message="Role retrieved successfully",
-        data=RoleResponse.model_validate(obj=role),
-    )
+    return RoleRead(message="Role retrieved successfully", data=role)
 
 
 @router.get(
@@ -258,9 +245,7 @@ async def read_all_roles(
             limit=roles.limit,
             total_pages=roles.total_pages,
             total_records=roles.total_records,
-            records=[
-                RoleResponse.model_validate(obj=role) for role in roles.records
-            ],
+            records=roles.records,
         ),
     )
 
@@ -299,14 +284,11 @@ async def update_roles(
     - `updated_at` (datetime): Datetime of role updation.
 
     """
-    updated_roles: list[Role] = role_service.update_bulk_by_ids(
+    roles: list[Role] = role_service.update_bulk_by_ids(
         db_session=db_session, records=records
     )
 
-    return RoleBulkRead(
-        message="Roles updated successfully",
-        data=[RoleResponse.model_validate(obj=role) for role in updated_roles],
-    )
+    return RoleBulkRead(message="Roles updated successfully", data=roles)
 
 
 @router.put(
@@ -346,20 +328,17 @@ async def update_role(
     - `updated_at` (datetime): Datetime of role updation.
 
     """
-    updated_role: Role | None = role_service.update_by_id(
+    role: Role | None = role_service.update_by_id(
         db_session=db_session, record_id=role_id, record=record
     )
 
-    if not isinstance(updated_role, Role):
+    if not isinstance(role, Role):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=ROLE_NOT_FOUND,
         )
 
-    return RoleRead(
-        message="Role updated successfully",
-        data=RoleResponse.model_validate(obj=updated_role),
-    )
+    return RoleRead(message="Role updated successfully", data=role)
 
 
 @router.patch(
@@ -396,13 +375,12 @@ async def patch_roles(
     - `updated_at` (datetime): Datetime of role updation.
 
     """
-    updated_roles: list[Role] = role_service.update_bulk_by_ids(
+    roles: list[Role] = role_service.update_bulk_by_ids(
         db_session=db_session, records=records
     )
 
     return RoleBulkRead(
-        message="Roles partially updated successfully",
-        data=[RoleResponse.model_validate(obj=role) for role in updated_roles],
+        message="Roles partially updated successfully", data=roles
     )
 
 
@@ -443,22 +421,19 @@ async def patch_role(
     - `updated_at` (datetime): Datetime of role updation.
 
     """
-    updated_role: Role | None = role_service.update_by_id(
+    role: Role | None = role_service.update_by_id(
         db_session=db_session,
         record_id=role_id,
         record=record,  # type: ignore[arg-type]
     )
 
-    if not isinstance(updated_role, Role):
+    if not isinstance(role, Role):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=ROLE_NOT_FOUND,
         )
 
-    return RoleRead(
-        message="Role partially updated successfully",
-        data=RoleResponse.model_validate(obj=updated_role),
-    )
+    return RoleRead(message="Role partially updated successfully", data=role)
 
 
 @router.delete(

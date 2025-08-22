@@ -117,7 +117,7 @@ repos:
   # improving code readability and consistency.
   - repo: https://github.com/astral-sh/ruff-pre-commit
     # Ruff version.
-    rev: v0.12.9
+    rev: v0.12.10
     hooks:
       # Run linter.
       - id: ruff
@@ -128,7 +128,7 @@ repos:
   # A tool to check Python code for type hints and type errors, ensuring that
   # code is correctly annotated and free of type-related issues.
   - repo: https://github.com/RobertCraigie/pyright-python
-    rev: v1.1.403
+    rev: v1.1.404
     hooks:
       - id: pyright
         language: system

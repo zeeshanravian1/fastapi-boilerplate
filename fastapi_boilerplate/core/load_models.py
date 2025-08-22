@@ -9,7 +9,7 @@ from importlib import import_module
 from pathlib import Path
 
 
-class LoadDBModels:
+class LoadDBModels:  # pylint: disable=too-few-public-methods
     """Load all SQLModel models.
 
     :Description:

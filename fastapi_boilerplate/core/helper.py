@@ -31,7 +31,7 @@ class CoreHelper:
 
         """
         if isinstance(cors, str) and not cors.startswith("["):
-            return [i.strip() for i in cors.split(",")]
+            return [i.strip() for i in cors.split(sep=",")]
 
         if isinstance(cors, list | str):
             return cors

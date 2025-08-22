@@ -12,6 +12,7 @@ from jwt import decode
 
 from fastapi_boilerplate.apps.api_v1.user.constant import (
     INACTIVE_USER,
+    INCORRECT_PASSWORD,
     USER_NOT_FOUND,
 )
 from fastapi_boilerplate.apps.api_v1.user.helper import UserHelper
@@ -23,10 +24,10 @@ from fastapi_boilerplate.apps.api_v1.user.model import (
 from fastapi_boilerplate.apps.base.model import BaseRead
 from fastapi_boilerplate.apps.base.service import BaseService
 from fastapi_boilerplate.core.config import settings
-from fastapi_boilerplate.core.security import create_token
+from fastapi_boilerplate.core.security import SecurityManager
 from fastapi_boilerplate.database.session import DBSession
 
-from .constant import INCORRECT_PASSWORD, TOKEN_TYPE, TokenType
+from .constant import TOKEN_TYPE, TokenType
 from .model import LoginResponse, RefreshTokenResponse
 from .repository import AuthenticationRepository
 
@@ -86,11 +87,11 @@ class AuthenticationService(BaseService[User, UserCreate, UserUpdate]):
             "email": user.email,
         }
 
-        access_token: str = create_token(
+        access_token: str = SecurityManager.create_token(
             data=data, token_type=TokenType.ACCESS_TOKEN
         )
 
-        refresh_token: str = create_token(
+        refresh_token: str = SecurityManager.create_token(
             data=data, token_type=TokenType.REFRESH_TOKEN
         )
 
@@ -142,7 +143,7 @@ class AuthenticationService(BaseService[User, UserCreate, UserUpdate]):
             "email": user.email,
         }
 
-        access_token: str = create_token(
+        access_token: str = SecurityManager.create_token(
             data=data,  # type: ignore[arg-type]
             token_type=TokenType.ACCESS_TOKEN,
         )

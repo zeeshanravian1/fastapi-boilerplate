@@ -6,6 +6,7 @@ Description:
 
 """
 
+import re
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
@@ -14,13 +15,14 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.docs import get_redoc_html, get_swagger_ui_html
 from fastapi.responses import HTMLResponse, ORJSONResponse
+from fastapi.routing import APIRoute
 from fastapi.staticfiles import StaticFiles
 
 from fastapi_boilerplate.apps.route import router
 from fastapi_boilerplate.core.config import settings
 from fastapi_boilerplate.core.helper import CoreHelper
 from fastapi_boilerplate.middleware.exception_handling import (
-    exception_handling,
+    ExceptionHandlingMiddleware,
 )
 
 
@@ -69,7 +71,9 @@ app.add_middleware(
 )
 
 # Custom http middleware
-app.middleware(middleware_type="http")(exception_handling)
+app.middleware(middleware_type="http")(
+    ExceptionHandlingMiddleware.exception_handling
+)
 
 
 # Custom Exception Handler for RequestValidationError
@@ -121,7 +125,7 @@ async def http_exception_handler(
     response_description="Home page",
     tags=["Root"],
 )
-async def root() -> dict[str, str]:
+async def root() -> ORJSONResponse:
     """Root Route.
 
     :Description:
@@ -131,10 +135,41 @@ async def root() -> dict[str, str]:
     - `None`
 
     :Returns:
-    - `dict[str, str]`: Welcome message.
+    - `data` (ORJSONResponse): Welcome message with all available API routes.
 
     """
-    return {"detail": f"Welcome to {settings.PROJECT_TITLE}"}
+    versioned_routes: dict[str, dict[str, list[dict[str, str]]]] = {}
+    default_routes: dict[str, list[dict[str, str]]] = {}
+    version_pattern: re.Pattern[str] = re.compile(
+        pattern=r"^/api/(v\d+)/([^/]+)"
+    )
+
+    for route in app.routes:
+        if isinstance(route, APIRoute) and route.path != "/":
+            route_info: dict[str, str] = {
+                "path": route.path,
+                "method": next(iter(route.methods)),
+            }
+
+            if match := version_pattern.match(string=route.path):
+                versioned_routes.setdefault(match.group(1), {}).setdefault(
+                    match.group(2), []
+                ).append(route_info)
+
+            else:
+                default_routes.setdefault(
+                    route.path.split(sep="/", maxsplit=2)[1], []
+                ).append(route_info)
+
+    return ORJSONResponse(
+        status_code=status.HTTP_200_OK,
+        content={
+            "success": True,
+            "message": f"Welcome to {settings.PROJECT_TITLE}",
+            "data": {"routes": {**versioned_routes, **default_routes}},
+            "error": None,
+        },
+    )
 
 
 # Custom Swagger Route

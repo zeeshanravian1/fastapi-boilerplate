@@ -209,33 +209,7 @@ class UserCreate(UserBase):
     )
 
 
-class UserResponse(Base, UserBase):
-    """User Response Model.
-
-    :Description:
-    - This class contains model for user response.
-
-    :Attributes:
-    - `id` (UUID | int): Unique identifier for user.
-    - `first_name` (str): First name of user.
-    - `last_name` (str): Last name of user.
-    - `contact_no` (str | None): Contact number of user.
-    - `username` (str): Username of user.
-    - `email` (EmailStr): Email of user.
-    - `address` (str | None): Address of user.
-    - `city` (str | None): City of user.
-    - `state` (str | None): State of user.
-    - `country` (str | None): Country of user.
-    - `postal_code` (str | None): Postal code of user.
-    - `avatar` (str | None): Path to user's avatar.
-    - `is_active` (bool): Status of user account.
-    - `created_at` (datetime): Timestamp when user was created.
-    - `updated_at` (datetime): Timestamp when user was last updated.
-
-    """
-
-
-class UserRead(BaseRead[UserResponse]):
+class UserRead(BaseRead[User]):
     """User Read Model.
 
     :Description:
@@ -244,15 +218,15 @@ class UserRead(BaseRead[UserResponse]):
     :Attributes:
     - `success` (bool): Success status.
     - `message` (str): Message for response.
-    - `data` (UserResponse | None): Data for response.
+    - `data` (User | None): Data for response.
     - `error` (str | None): Error message if any.
 
     """
 
-    data: UserResponse | None = Field(default=None)
+    data: User | None = Field(default=None)
 
 
-class UserBulkRead(BaseRead[UserResponse]):
+class UserBulkRead(BaseRead[User]):
     """User Bulk Read Model.
 
     :Description:
@@ -261,15 +235,15 @@ class UserBulkRead(BaseRead[UserResponse]):
     :Attributes:
     - `success` (bool): Success status.
     - `message` (str): Message for response.
-    - `data` (list[UserResponse]): List of users.
+    - `data` (list[User]): List of users.
     - `error` (str | None): Error message if any.
 
     """
 
-    data: list[UserResponse]  # type: ignore[assignment]
+    data: list[User]  # type: ignore[assignment]
 
 
-class UserPaginationData(BasePaginationData[UserResponse]):
+class UserPaginationData(BasePaginationData[User]):
     """User Pagination Data Model.
 
     :Description:
@@ -280,15 +254,15 @@ class UserPaginationData(BasePaginationData[UserResponse]):
     - `limit` (int): Number of records per page.
     - `total_pages` (int): Total number of pages.
     - `total_records` (int): Total number of records.
-    - `records` (Sequence[UserResponse]): List of user records for current
+    - `records` (Sequence[User]): List of user records for current
     page.
 
     """
 
-    records: Sequence[UserResponse]
+    records: Sequence[User]
 
 
-class UserPaginationRead(BasePaginationRead[UserResponse]):
+class UserPaginationRead(BasePaginationRead[User]):
     """User Pagination Read Model.
 
     :Description:
@@ -297,7 +271,7 @@ class UserPaginationRead(BasePaginationRead[UserResponse]):
     :Attributes:
     - `success` (bool): Success status.
     - `message` (str): Message for response.
-    - `data` (BasePaginationData[UserResponse]): Paginated data for response.
+    - `data` (BasePaginationData[User]): Paginated data for response.
     - `error` (str | None): Error message if any.
 
     """
@@ -402,8 +376,8 @@ class UserBulkPatch(BaseBulkUpdate, UserPatch):
     """
 
 
-class PasswordChange(SQLModel):
-    """Password Change Model.
+class RequestPasswordChange(SQLModel):
+    """Request Password Change Model.
 
     :Description:
     - This class contains model for changing user password.
@@ -439,7 +413,7 @@ class PasswordChange(SQLModel):
     )
 
 
-class PasswordChangeRead(BaseRead[UserResponse]):
+class PasswordChangeRead(BaseRead[User]):
     """Password Change Read Model.
 
     :Description:

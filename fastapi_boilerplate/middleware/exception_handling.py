@@ -25,70 +25,81 @@ from .constant import INTEGRITY_ERROR, INTERNAL_SERVER_ERROR
 exception_logger: logging.Logger = logging.getLogger(__name__)
 
 
-async def exception_handling(
-    request: Request, call_next: Callable[[Request], Awaitable[Response]]
-) -> ORJSONResponse | Response:
+class ExceptionHandlingMiddleware:  # pylint: disable=too-few-public-methods
     """Exception Handling Middleware.
 
     :Description:
-    - This function is used to handle exceptions.
-
-    :Args:
-    - `request` (Request): Request object. **(Required)**
-    - `call_next` (Callable): Next function to be called. **(Required)**
-
-    :Returns:
-    - **response** (Response): Response object.
+    - This class is used to handle exceptions.
 
     """
-    message: str
-    error: str | None = None
 
-    try:
-        response: Response = await call_next(request)
-        return response
+    @staticmethod
+    async def exception_handling(
+        request: Request,
+        call_next: Callable[[Request], Awaitable[Response]],
+    ) -> ORJSONResponse | Response:
+        """Exception Handling Middleware.
 
-    except ExpiredSignatureError:
-        status_code = status.HTTP_401_UNAUTHORIZED
-        message = EXPIRED_OTP
+        :Description:
+        - This function is used to handle exceptions.
 
-    except InvalidSignatureError:
-        status_code = status.HTTP_401_UNAUTHORIZED
-        message = INVALID_OTP
+        :Args:
+        - `request` (Request): Request object. **(Required)**
+        - `call_next` (Callable): Next function to be called. **(Required)**
 
-    except IntegrityError as err:
-        status_code = status.HTTP_409_CONFLICT
-        message = INTEGRITY_ERROR
-        error = INTEGRITY_ERROR
+        :Returns:
+        - **response** (Response): Response object.
 
-        if isinstance(
-            err.orig, UniqueViolation | ForeignKeyViolation | NotNullViolation
-        ):
-            err_message_detail: str | None = err.orig.diag.message_detail
+        """
+        message: str
+        error: str | None = None
 
-            if err_message_detail is not None:
-                error = (
-                    err_message_detail.replace("Key", "")
-                    .replace("(", "")
-                    .replace(")", "")
-                    .replace('"', "'")
-                    .rstrip(".")
-                    .strip()
-                )
+        try:
+            response: Response = await call_next(request)
+            return response
 
-    except Exception as err:  # pylint: disable=broad-exception-caught
-        exception_logger.exception(msg=err)
+        except ExpiredSignatureError:
+            status_code = status.HTTP_401_UNAUTHORIZED
+            message = EXPIRED_OTP
 
-        status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-        message = INTERNAL_SERVER_ERROR
-        error = str(err)
+        except InvalidSignatureError:
+            status_code = status.HTTP_401_UNAUTHORIZED
+            message = INVALID_OTP
 
-    return ORJSONResponse(
-        status_code=status_code,
-        content={
-            "success": False,
-            "message": message,
-            "data": None,
-            "error": error,
-        },
-    )
+        except IntegrityError as err:
+            status_code = status.HTTP_409_CONFLICT
+            message = INTEGRITY_ERROR
+            error = INTEGRITY_ERROR
+
+            if isinstance(
+                err.orig,
+                UniqueViolation | ForeignKeyViolation | NotNullViolation,
+            ):
+                err_message_detail: str | None = err.orig.diag.message_detail
+
+                if err_message_detail is not None:
+                    error = (
+                        err_message_detail.replace("Key", "")
+                        .replace("(", "")
+                        .replace(")", "")
+                        .replace('"', "'")
+                        .rstrip(".")
+                        .strip()
+                    )
+
+        except Exception as err:  # pylint: disable=broad-exception-caught
+            exception_logger.exception(msg=err)
+
+            status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+            message = INTERNAL_SERVER_ERROR
+            error = str(err)
+
+        return ORJSONResponse(
+            status_code=status_code,
+            content={
+                "success": False,
+                "message": message,
+                "data": None,
+                "error": error,
+            },
+        )

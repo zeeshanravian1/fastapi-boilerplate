@@ -14,7 +14,7 @@ from sqlmodel import Session
 from .connection import engine
 
 
-class SessionManager:
+class SessionManager:  # pylint: disable=too-few-public-methods
     """Session manager for database.
 
     :Description:

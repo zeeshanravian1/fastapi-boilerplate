@@ -8,7 +8,6 @@ Description:
 from enum import Enum
 
 TOKEN_TYPE: str = "Bearer"
-INCORRECT_PASSWORD: str = "Incorrect password"
 
 
 class TokenType(str, Enum):

@@ -95,6 +95,9 @@ class BaseRepository[
         db_session.add_all(instances=db_instances)
         db_session.commit()
 
+        for db_instance in db_instances:
+            db_session.refresh(instance=db_instance)
+
         return db_instances
 
     def read_by_id(
@@ -330,10 +333,8 @@ class BaseRepository[
         - `list[Model]`: List of updated records.
 
         """
-        record_ids: list[UUID | int] = [record.id for record in records]
-
         db_records: list[Model] = self.read_bulk_by_ids(
-            db_session=db_session, record_ids=record_ids
+            db_session=db_session, record_ids=[record.id for record in records]
         )
 
         for db_record, record in zip(db_records, records, strict=False):
